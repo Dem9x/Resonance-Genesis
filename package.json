@@ -1,0 +1,19 @@
+{
+  "name": "resonance-genesis-monorepo",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/web"
+  ],
+  "scripts": {
+    "dev": "npm run dev -w @resonance/web",
+    "build": "npm run build -w @resonance/web",
+    "lint": "npm run lint -w @resonance/web",
+    "typecheck": "npm run typecheck -w @resonance/web",
+    "forge:build": "forge build --root packages/contracts",
+    "forge:test": "forge test --root packages/contracts",
+    "deploy:sepolia": "forge script script/DeploySepolia.s.sol:DeploySepolia --root packages/contracts --rpc-url %SEPOLIA_RPC_URL% --private-key %PRIVATE_KEY% --broadcast -vvvv",
+    "set:base-uri": "forge script script/SetBaseURI.s.sol:SetBaseURI --root packages/contracts --rpc-url %SEPOLIA_RPC_URL% --private-key %PRIVATE_KEY% --broadcast -vvvv",
+    "set:traits": "forge script script/BatchSetTraits.s.sol:BatchSetTraits --root packages/contracts --rpc-url %SEPOLIA_RPC_URL% --private-key %PRIVATE_KEY% --broadcast -vvvv"
+  }
+}
