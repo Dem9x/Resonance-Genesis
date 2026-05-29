@@ -1,0 +1,60 @@
+# dependencies
+node_modules/
+.npm-cache/
+package-lock.json/
+# env / secrets
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+secrets/
+credentials/
+.local/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Next.js / frontend
+.next/
+out/
+dist/
+build/
+
+coverage/
+.cache/
+.turbo/
+*.tsbuildinfo
+
+# logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# uploads / temp
+uploads/
+tmp/
+cache/
+docker-data/
+
+# Hardhat / TypeChain
+artifacts/
+typechain-types/
+
+# Foundry
+cache/
+out/
+broadcast/
+
+
+# generated NFT output
+output/images/
+output/metadata/
+
+# optional generated data
+# data/items.json

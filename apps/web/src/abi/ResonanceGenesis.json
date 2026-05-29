@@ -1,0 +1,99 @@
+[
+  {
+    "type": "function",
+    "name": "mint",
+    "stateMutability": "payable",
+    "inputs": [{ "name": "quantity", "type": "uint256" }],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "mintPrice",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "name": "totalSupply",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "name": "maxSupply",
+    "stateMutability": "view",
+    "inputs": [],
+    "outputs": [{ "name": "", "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "name": "balanceOf",
+    "stateMutability": "view",
+    "inputs": [{ "name": "owner", "type": "address" }],
+    "outputs": [{ "name": "", "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "name": "tokenOfOwnerByIndex",
+    "stateMutability": "view",
+    "inputs": [
+      { "name": "owner", "type": "address" },
+      { "name": "index", "type": "uint256" }
+    ],
+    "outputs": [{ "name": "", "type": "uint256" }]
+  },
+  {
+    "type": "function",
+    "name": "tokenURI",
+    "stateMutability": "view",
+    "inputs": [{ "name": "tokenId", "type": "uint256" }],
+    "outputs": [{ "name": "", "type": "string" }]
+  },
+  {
+    "type": "function",
+    "name": "ownerOf",
+    "stateMutability": "view",
+    "inputs": [{ "name": "tokenId", "type": "uint256" }],
+    "outputs": [{ "name": "", "type": "address" }]
+  },
+  {
+    "type": "function",
+    "name": "approve",
+    "stateMutability": "nonpayable",
+    "inputs": [
+      { "name": "to", "type": "address" },
+      { "name": "tokenId", "type": "uint256" }
+    ],
+    "outputs": []
+  },
+  {
+    "type": "function",
+    "name": "getApproved",
+    "stateMutability": "view",
+    "inputs": [{ "name": "tokenId", "type": "uint256" }],
+    "outputs": [{ "name": "", "type": "address" }]
+  },
+  {
+    "type": "function",
+    "name": "getNodeTraits",
+    "stateMutability": "view",
+    "inputs": [{ "name": "tokenId", "type": "uint256" }],
+    "outputs": [
+      {
+        "name": "traits",
+        "type": "tuple",
+        "components": [
+          { "name": "frequency", "type": "uint32" },
+          { "name": "modeN", "type": "uint8" },
+          { "name": "modeM", "type": "uint8" },
+          { "name": "nodeDensityBps", "type": "uint16" },
+          { "name": "lineThicknessBps", "type": "uint16" },
+          { "name": "rarityTier", "type": "uint8" },
+          { "name": "initialized", "type": "bool" }
+        ]
+      }
+    ]
+  }
+]
