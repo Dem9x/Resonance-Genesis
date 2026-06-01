@@ -22,10 +22,7 @@ contract ResonanceGenesisTest is Test {
         assertEq(nft.totalSupply(), 1);
     }
 
-    function testBatchSetNodeTraits() public {
-        vm.prank(user);
-        nft.mint{value: 0.02 ether}(2);
-
+    function testBatchSetNodeTraitsBeforeMint() public {
         uint256[] memory tokenIds = new uint256[](2);
         tokenIds[0] = 1;
         tokenIds[1] = 2;
@@ -39,5 +36,9 @@ contract ResonanceGenesisTest is Test {
         ResonanceGenesis.NodeTraits memory stored = nft.getNodeTraits(1);
         assertEq(stored.frequency, 963);
         assertTrue(stored.initialized);
+
+        vm.prank(user);
+        nft.mint{value: 0.01 ether}(1);
+        assertEq(nft.ownerOf(1), user);
     }
 }

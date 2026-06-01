@@ -7,9 +7,11 @@ import { useAccount, useChainId, useReadContracts, useWaitForTransactionReceipt,
 import { ConnectWalletButton } from "@/components/ConnectWalletButton";
 import { ContractNodeArtwork } from "@/components/ContractNodeCard";
 import { ContractStatus } from "@/components/ContractStatus";
+import { RpcRateLimitNotice } from "@/components/RpcRateLimitNotice";
 import { SetupRequired } from "@/components/SetupRequired";
 import { contracts, hasMintContract } from "@/lib/contracts";
 import { requiredChainId } from "@/lib/chains";
+import { rpcQueryOptions } from "@/lib/query";
 import type { ChladniMetadata } from "@/types/node";
 
 export function MintPanel() {
@@ -26,7 +28,8 @@ export function MintPanel() {
           { ...contracts.resonanceGenesis, functionName: "maxSupply" },
           { ...contracts.resonanceGenesis, functionName: "mintPrice" }
         ]
-      : []
+      : [],
+    query: { ...rpcQueryOptions, enabled: hasMintContract }
   });
 
   const [totalSupply, maxSupply, mintPrice] = reads.data?.map((result) => result.result as bigint | undefined) || [];
@@ -75,6 +78,7 @@ export function MintPanel() {
       </article>
       <div className="glass-panel rounded-3xl p-6 md:p-8">
         <ContractStatus wrongNetwork={wrongNetwork} />
+        <RpcRateLimitNotice error={reads.error} />
         <p className="font-display text-xs font-bold uppercase tracking-[0.28em] text-[var(--accent)]">Sepolia Mint Console</p>
         <h1 className="mt-4 font-display text-4xl font-black uppercase text-[var(--text)]">Mint Chladni Node</h1>
         <p className="mt-4 text-[var(--muted)]">

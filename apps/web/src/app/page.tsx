@@ -11,7 +11,7 @@ const traits = [
   ["Background Gradient", "Archive spectra", Layers3],
   ["Pattern Family", "Cymatic lineages", Atom],
   ["Node Architecture", "Sand field topology", Gem],
-  ["Resonance Energy", "Utility points", Zap],
+  ["RE Native Power", "Utility power", Zap],
   ["Mining State", "Idle / Mining / Cooldown", Pickaxe],
   ["Rarity Tier", "Common to Mythic", BadgeCheck]
 ];
@@ -30,18 +30,18 @@ export default function HomePage() {
       <SectionShell
         eyebrow="Utility"
         title="Activate mining mode."
-        copy="Holders can stake Chladni Node NFTs to activate miner state. Staked nodes generate Resonance Energy points over time for future in-app uses such as upgrades, allowlist access, future mints, cosmetics, or protocol utilities."
+        copy="RE is native resonance power. Stake a Chladni Node to activate mining mode and accumulate RE over time. RE powers future mechanics such as upgrades, allowlist boosts, miner levels, cosmetic unlocks, node evolution, and future protocol utility."
       >
         <div className="glass-panel rounded-3xl p-6 md:p-8">
           <div className="grid gap-4 md:grid-cols-4">
-            {["Stake NFT", "Mine Utility Points", "Claim Energy", "Upgrade Future Nodes"].map((item, index) => (
+            {["Stake NFT", "Accumulate RE", "Claim RE", "Upgrade Future Nodes"].map((item, index) => (
               <div key={item} className="rounded-2xl border border-white/10 bg-white/5 p-5">
                 <p className="font-display text-xs font-bold uppercase tracking-[0.24em] text-archive-cyan">0{index + 1}</p>
                 <p className="mt-5 text-xl font-bold text-white">{item}</p>
               </div>
             ))}
           </div>
-          <p className="mt-6 text-sm text-slate-400">Resonance Energy is represented here as in-app utility points. This interface does not promise financial return, APY, or yield.</p>
+          <p className="mt-6 text-sm text-slate-400">RE is a utility power balance, not APY, yield, profit, or a guaranteed financial return.</p>
         </div>
       </SectionShell>
       <SectionShell eyebrow="Trait System" title="Archive metadata matrix." copy="Some nodes have rarer gradients and higher resonance complexity, creating distinct artifact signatures across the collection.">

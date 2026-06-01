@@ -4,15 +4,19 @@ pragma solidity ^0.8.24;
 import {Test} from "forge-std/Test.sol";
 import {ResonanceGenesis} from "../src/ResonanceGenesis.sol";
 import {ChladniNodeMiner} from "../src/ChladniNodeMiner.sol";
+import {ResonanceEnergy} from "../src/ResonanceEnergy.sol";
 
 contract ChladniNodeMinerTest is Test {
     ResonanceGenesis internal nft;
+    ResonanceEnergy internal re;
     ChladniNodeMiner internal miner;
     address internal user = address(0xCAFE);
 
     function setUp() public {
         nft = new ResonanceGenesis(100, 0.01 ether, "ipfs://metadata-cid/");
-        miner = new ChladniNodeMiner(address(nft));
+        re = new ResonanceEnergy();
+        miner = new ChladniNodeMiner(address(nft), address(re));
+        re.setMinter(address(miner));
         vm.deal(user, 1 ether);
 
         vm.prank(user);
@@ -42,6 +46,7 @@ contract ChladniNodeMinerTest is Test {
 
         vm.startPrank(user);
         miner.claim(1);
+        assertGt(re.balanceOf(user), 0);
         miner.unstake(1);
         vm.stopPrank();
 

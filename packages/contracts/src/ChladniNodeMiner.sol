@@ -20,6 +20,10 @@ interface IResonanceGenesis is IERC721 {
     function getNodeTraits(uint256 tokenId) external view returns (NodeTraits memory traits);
 }
 
+interface IResonanceEnergy {
+    function mint(address to, uint256 amount) external;
+}
+
 contract ChladniNodeMiner is IERC721Receiver, Ownable, ReentrancyGuard {
     struct StakeInfo {
         address owner;
@@ -30,6 +34,7 @@ contract ChladniNodeMiner is IERC721Receiver, Ownable, ReentrancyGuard {
 
     uint256 public constant ENERGY_SCALE = 1 days;
     IResonanceGenesis public immutable resonanceGenesis;
+    IResonanceEnergy public immutable resonanceEnergy;
 
     mapping(uint256 tokenId => StakeInfo info) public stakes;
     mapping(address user => uint256[] tokenIds) private stakedTokensByOwner;
@@ -39,9 +44,11 @@ contract ChladniNodeMiner is IERC721Receiver, Ownable, ReentrancyGuard {
     event NodeUnstaked(address indexed user, uint256 indexed tokenId);
     event EnergyClaimed(address indexed user, uint256 indexed tokenId, uint256 amount);
 
-    constructor(address nftAddress) Ownable(msg.sender) {
+    constructor(address nftAddress, address reAddress) Ownable(msg.sender) {
         require(nftAddress != address(0), "zero nft");
+        require(reAddress != address(0), "zero re");
         resonanceGenesis = IResonanceGenesis(nftAddress);
+        resonanceEnergy = IResonanceEnergy(reAddress);
     }
 
     function stake(uint256 tokenId) external nonReentrant {
@@ -67,6 +74,9 @@ contract ChladniNodeMiner is IERC721Receiver, Ownable, ReentrancyGuard {
 
         uint256 claimAmount = pendingEnergy(tokenId);
         if (claimAmount > 0) {
+            info.accumulatedEnergy = 0;
+            info.lastClaimAt = uint64(block.timestamp);
+            resonanceEnergy.mint(msg.sender, claimAmount);
             emit EnergyClaimed(msg.sender, tokenId, claimAmount);
         }
 
@@ -83,6 +93,9 @@ contract ChladniNodeMiner is IERC721Receiver, Ownable, ReentrancyGuard {
         amount = pendingEnergy(tokenId);
         info.accumulatedEnergy = 0;
         info.lastClaimAt = uint64(block.timestamp);
+        if (amount > 0) {
+            resonanceEnergy.mint(msg.sender, amount);
+        }
         emit EnergyClaimed(msg.sender, tokenId, amount);
     }
 

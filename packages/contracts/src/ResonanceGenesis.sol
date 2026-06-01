@@ -76,7 +76,7 @@ contract ResonanceGenesis is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard 
     }
 
     function getNodeTraits(uint256 tokenId) external view returns (NodeTraits memory traits) {
-        _requireOwned(tokenId);
+        require(tokenId > 0 && tokenId <= maxSupply, "token id out of range");
         traits = nodeTraits[tokenId];
     }
 
@@ -92,7 +92,7 @@ contract ResonanceGenesis is ERC721, ERC721Enumerable, Ownable, ReentrancyGuard 
     }
 
     function _setNodeTraits(uint256 tokenId, NodeTraits calldata traits) private {
-        _requireOwned(tokenId);
+        require(tokenId > 0 && tokenId <= maxSupply, "token id out of range");
         require(traits.frequency > 0, "frequency zero");
         require(traits.modeN > 0 && traits.modeM > 0, "mode zero");
         require(traits.rarityTier <= 5, "bad rarity");

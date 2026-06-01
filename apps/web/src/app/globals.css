@@ -192,3 +192,81 @@ a {
   color: var(--text);
   box-shadow: 0 0 24px color-mix(in srgb, var(--accent-2) 32%, transparent);
 }
+
+@keyframes shimmer {
+  0% {
+    transform: translateX(-120%);
+  }
+  100% {
+    transform: translateX(120%);
+  }
+}
+
+@keyframes wave-drift {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-18px);
+  }
+}
+
+@keyframes cursor-blink {
+  0%,
+  48% {
+    opacity: 1;
+  }
+  49%,
+  100% {
+    opacity: 0;
+  }
+}
+
+.heartbeat-line {
+  stroke-dasharray: 760;
+  stroke-dashoffset: 760;
+  animation: heartbeat-trace 2.4s linear infinite;
+}
+
+.heartbeat-dot {
+  offset-path: path("M0 78 H44 L60 78 L72 60 L84 104 L98 28 L116 128 L134 78 H188 L202 78 L214 64 L226 96 L240 42 L258 116 L274 78 H340 L354 78 L366 58 L378 102 L392 26 L410 126 L428 78 H500 L514 78 L526 66 L538 94 L552 50 L570 108 L586 78 H640");
+  animation: heartbeat-dot-run 2.4s linear infinite;
+  filter: drop-shadow(0 0 12px var(--sand));
+}
+
+@keyframes heartbeat-trace {
+  0% {
+    stroke-dashoffset: 760;
+    opacity: 0.25;
+  }
+  12% {
+    opacity: 1;
+  }
+  72% {
+    stroke-dashoffset: 0;
+    opacity: 1;
+  }
+  100% {
+    stroke-dashoffset: -220;
+    opacity: 0.2;
+  }
+}
+
+@keyframes heartbeat-dot-run {
+  0% {
+    offset-distance: 0%;
+    opacity: 0;
+  }
+  8% {
+    opacity: 1;
+  }
+  78% {
+    offset-distance: 100%;
+    opacity: 1;
+  }
+  100% {
+    offset-distance: 100%;
+    opacity: 0;
+  }
+}
