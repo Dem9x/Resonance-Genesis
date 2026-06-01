@@ -3,7 +3,8 @@
   "version": "0.1.0",
   "private": true,
   "workspaces": [
-    "apps/web"
+    "apps/web",
+    "packages/solana"
   ],
   "scripts": {
     "dev": "npm run dev -w @resonance/web",
@@ -14,6 +15,13 @@
     "forge:test": "forge test --root packages/contracts",
     "deploy:sepolia": "forge script script/DeploySepolia.s.sol:DeploySepolia --root packages/contracts --rpc-url %SEPOLIA_RPC_URL% --private-key %PRIVATE_KEY% --broadcast -vvvv",
     "set:base-uri": "forge script script/SetBaseURI.s.sol:SetBaseURI --root packages/contracts --rpc-url %SEPOLIA_RPC_URL% --private-key %PRIVATE_KEY% --broadcast -vvvv",
-    "set:traits": "forge script script/BatchSetTraits.s.sol:BatchSetTraits --root packages/contracts --rpc-url %SEPOLIA_RPC_URL% --private-key %PRIVATE_KEY% --broadcast -vvvv"
+    "set:traits": "forge script script/BatchSetTraits.s.sol:BatchSetTraits --root packages/contracts --rpc-url %SEPOLIA_RPC_URL% --private-key %PRIVATE_KEY% --broadcast -vvvv",
+    "solana:build": "npm run build -w @resonance/solana",
+    "solana:test": "npm run test -w @resonance/solana",
+    "solana:deploy:devnet": "npm run deploy:devnet -w @resonance/solana",
+    "solana:create-re-token": "npm run create-re-token -w @resonance/solana",
+    "solana:initialize": "npm run initialize -w @resonance/solana",
+    "solana:mint-samples": "npm run mint-samples -w @resonance/solana",
+    "solana:set-traits": "npm run set-traits -w @resonance/solana"
   }
 }

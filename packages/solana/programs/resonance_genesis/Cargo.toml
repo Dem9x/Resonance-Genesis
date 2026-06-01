@@ -1,0 +1,19 @@
+[package]
+name = "resonance_genesis"
+version = "0.1.0"
+description = "Resonance Genesis Solana Devnet staking and RE mining program"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "resonance_genesis"
+
+[features]
+no-entrypoint = []
+no-idl = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { version = "0.31.1", features = ["init-if-needed"] }
+anchor-spl = "0.31.1"

@@ -168,3 +168,46 @@ NEXT_PUBLIC_RPC_URL=<mainnet rpc>
 NEXT_PUBLIC_RESONANCE_GENESIS_ADDRESS=<mainnet nft>
 NEXT_PUBLIC_CHLADNI_NODE_MINER_ADDRESS=<mainnet miner>
 ```
+## Solana Devnet Version
+
+This repository now includes a parallel Solana Devnet implementation in `packages/solana`. The EVM/Foundry contracts remain intact.
+
+### Setup
+
+Install Solana CLI and Anchor, then configure Devnet:
+
+```bash
+solana config set --url devnet
+solana airdrop 2
+```
+
+Add Solana environment variables:
+
+```env
+NEXT_PUBLIC_SOLANA_NETWORK=devnet
+NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
+NEXT_PUBLIC_RESONANCE_SOLANA_PROGRAM_ID=
+NEXT_PUBLIC_RE_MINT_ADDRESS=
+NEXT_PUBLIC_CHLADNI_COLLECTION_MINT=
+NEXT_PUBLIC_SOLANA_EXPLORER_CLUSTER=devnet
+
+SOLANA_NETWORK=devnet
+SOLANA_RPC_URL=https://api.devnet.solana.com
+RESONANCE_SOLANA_PROGRAM_ID=
+RE_MINT_ADDRESS=
+CHLADNI_COLLECTION_MINT=
+```
+
+### Commands
+
+```bash
+npm run solana:build
+npm run solana:test
+npm run solana:deploy:devnet
+npm run solana:create-re-token
+npm run solana:initialize
+npm run solana:mint-samples
+npm run solana:set-traits
+```
+
+RE on Solana is designed as a real SPL token with 9 decimals and a 1,000,000,000 RE max supply. Claims unlock at 33 RE. RE is utility power, not APY, passive income, profit, or a guaranteed financial return.

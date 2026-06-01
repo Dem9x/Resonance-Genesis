@@ -7,6 +7,7 @@ const navItems = [
   { href: "/mint", label: "Mint" },
   { href: "/gallery", label: "Gallery" },
   { href: "/stake", label: "Stake" },
+  { href: "/solana", label: "Solana Devnet" },
   { href: "/waitlist", label: "Waitlist" },
   { href: "/news", label: "News" },
   { href: "/docs", label: "Docs" }
