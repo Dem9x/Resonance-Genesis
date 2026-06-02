@@ -6,7 +6,7 @@ pub mod state;
 
 use instructions::*;
 
-declare_id!("ReSo111111111111111111111111111111111111111");
+declare_id!("bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7");
 
 #[program]
 pub mod resonance_genesis {

@@ -3,10 +3,10 @@ seeds = true
 skip-lint = false
 
 [programs.localnet]
-resonance_genesis = "ReSo111111111111111111111111111111111111111"
+resonance_genesis = "bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7"
 
 [programs.devnet]
-resonance_genesis = "ReSo111111111111111111111111111111111111111"
+resonance_genesis = "bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7"
 
 [registry]
 url = "https://api.apr.dev"
