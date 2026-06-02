@@ -51,6 +51,9 @@ cache/
 out/
 broadcast/
 
+# Rust / Anchor
+target/
+
 
 # generated NFT output
 output/images/

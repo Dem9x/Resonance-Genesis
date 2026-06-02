@@ -2,6 +2,12 @@
 members = ["programs/resonance_genesis"]
 resolver = "2"
 
+[workspace.dependencies]
+# Anchor 0.31.x is commonly used with Cargo/Rust versions before edition 2024
+# stabilized. Newer blake3 releases can pull cpufeatures 0.3.x, whose manifest
+# requires edition2024 support, so pin blake3 to the last compatible line.
+blake3 = "=1.5.5"
+
 [profile.release]
 overflow-checks = true
 lto = "fat"
