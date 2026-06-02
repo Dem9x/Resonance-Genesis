@@ -1,15 +1,35 @@
 # Resonance Genesis
 
-Monorepo for the Resonance Genesis Chladni Node NFT and staking/miner dApp.
+Solana-first monorepo for the Resonance Genesis Chladni Node NFT and staking/miner dApp.
+
+On the `solana-version` branch, the active production path is Solana Devnet:
+
+```text
+scientific generator v3 -> Filebase/IPFS metadata -> Metaplex NFT mint -> NodeTraits PDA -> staking vault -> real SPL RE claim
+```
+
+The EVM/Foundry implementation remains in the repository as a Legacy EVM Reference and must not be deleted.
+
+## Source Of Truth
+
+- Visual NFT source: scientific generator V3
+- NFT metadata source: Filebase metadata CID
+- Mining trait source: `onchain-traits.json` written to Solana NodeTraits PDAs
+- RE source: real SPL token mint
+- Dashboard source: Solana accounts and SPL token accounts
+- MongoDB/API: optional cache only
+
+No flow should treat mock data, MongoDB, or frontend-only state as source of truth.
 
 ## Structure
 
 ```text
 apps/web              Next.js App Router dApp
-packages/contracts    Foundry Solidity workspace
+packages/solana       Anchor Solana Devnet program and scripts
+packages/contracts    Legacy Foundry Solidity workspace
+scripts/              Scientific Chladni collection generator
+docs/                 Solana, Filebase, and generator docs
 ```
-
-The dApp is contract-first on Sepolia. If contract addresses are missing, minting, gallery, staking, and node detail pages show setup-required states instead of fake live NFTs.
 
 ## Install
 
@@ -17,220 +37,190 @@ The dApp is contract-first on Sepolia. If contract addresses are missing, mintin
 npm install
 ```
 
-Install Foundry if `forge` is not already available:
+For Solana work, use WSL/Linux with Solana CLI, Rust/Cargo, and Anchor installed.
+
+## Solana Devnet Quick Start
 
 ```bash
-curl -L https://foundry.paradigm.xyz | bash
-foundryup
+cd packages/solana
+solana config set --url devnet
+solana airdrop 2
+
+export SOLANA_RPC_URL=https://api.devnet.solana.com
+export SOLANA_KEYPAIR=/home/dimassell/.config/solana/id.json
+export RESONANCE_SOLANA_PROGRAM_ID=bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7
 ```
 
-On Windows, use Git Bash or WSL for `foundryup`, or download the Foundry Windows release ZIP and add it to `PATH`.
-
-## Environment
-
-Root `.env` for Foundry:
+Build and test:
 
 ```bash
-SEPOLIA_RPC_URL=
-PRIVATE_KEY=
-ETHERSCAN_API_KEY=
-METADATA_CID=
-IMAGE_CID=
-RESONANCE_GENESIS_ADDRESS=
-CHLADNI_NODE_MINER_ADDRESS=
-MAX_SUPPLY=8888
-MINT_PRICE_WEI=10000000000000000
+npm run solana:build
+npm run solana:test
 ```
 
-`apps/web/.env.local` for the frontend:
+Create RE and initialize:
 
 ```bash
-NEXT_PUBLIC_CHAIN_ID=11155111
-NEXT_PUBLIC_RPC_URL=
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=
-NEXT_PUBLIC_RESONANCE_GENESIS_ADDRESS=
-NEXT_PUBLIC_CHLADNI_NODE_MINER_ADDRESS=
-NEXT_PUBLIC_IPFS_GATEWAY=https://ipfs.filebase.io/ipfs/
-NEXT_PUBLIC_METADATA_CID=
-NEXT_PUBLIC_IMAGE_CID=
+npm run solana:create-re-token
+export RE_MINT_ADDRESS=PASTE_RE_MINT
+
+npm run solana:create-collection
+export CHLADNI_COLLECTION_MINT=PASTE_COLLECTION_MINT
+
+npm run solana:initialize
 ```
 
-Do not commit private keys.
+`npm run solana:initialize` is idempotent. If `global_config` already exists, it prints `Global config already initialized` and exits successfully.
 
-## Filebase/IPFS Flow
+## Scientific NFT Generation
 
-1. Upload generated node images to Filebase and save `IMAGE_CID`.
-2. Generate metadata JSON using image URIs like `ipfs://<IMAGE_CID>/1.png`.
-3. Upload the metadata folder to Filebase and save `METADATA_CID`.
-4. Deploy `ResonanceGenesis` with base URI `ipfs://<METADATA_CID>/`.
-5. Deploy `ChladniNodeMiner` with the NFT contract address.
-6. Batch set compact on-chain mining traits.
-7. Add deployed addresses to `apps/web/.env.local`.
-8. Run the Next.js dApp.
-
-## Scientific Chladni Generator
-
-The repo includes a deterministic scientific Chladni generation pipeline in root `scripts/`.
+V3 is the active visual pipeline:
 
 ```bash
-npm run gen:scientific:v2:test
 npm run gen:scientific:v3:test
 npm run svg:png:v3
 npm run validate:scientific:v3
 ```
 
-Full documentation:
+Full collection:
+
+```bash
+npm run gen:scientific:v3
+npm run svg:png:v3
+```
+
+After uploading PNG images to Filebase:
+
+```bash
+node scripts/update-metadata-cid.mjs \
+  --metadata-dir output_scientific_collection_v3/chladni-nodes/metadata \
+  --image-cid YOUR_IMAGE_CID \
+  --image-ext png
+```
+
+Then upload the metadata folder to Filebase and use the metadata CID for Solana minting and/or EVM base URI.
+
+Generator docs:
 
 ```text
 docs/SCIENTIFIC_CHLADNI_GENERATOR.md
+docs/FILEBASE_PRODUCTION_FLOW.md
 ```
 
-## Foundry Commands
+## Set Solana Mining Traits
+
+Mining traits are written from the generated scientific `onchain-traits.json` into NodeTraits PDAs.
+
+For one frontend-minted NFT:
 
 ```bash
-cd packages/contracts
-forge build
-forge test
+cd packages/solana
+ONCHAIN_TRAITS_PATH=../../output_scientific_collection_v3/chladni-nodes/onchain-traits.json \
+NFT_MINT=PASTE_NFT_MINT \
+TRAIT_TOKEN_ID=1 \
+npm run set-traits
 ```
 
-Deploy to Sepolia:
+For a list of mints:
 
 ```bash
-forge script script/DeploySepolia.s.sol:DeploySepolia --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast -vvvv
+ONCHAIN_TRAITS_PATH=../../output_scientific_collection_v3/chladni-nodes/onchain-traits.json \
+NFT_MINTS=mint1,mint2,mint3 \
+npm run set-traits
 ```
 
-Set base URI:
+The script validates that frequency, mode N/M, node density BPS, and line thickness BPS are non-zero before sending transactions.
+
+## Stake And Claim RE
+
+Stake:
 
 ```bash
-forge script script/SetBaseURI.s.sol:SetBaseURI --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast -vvvv
+export NFT_MINT=PASTE_TRAIT_INITIALIZED_NFT_MINT
+npm run stake-test-node
 ```
 
-Batch set traits:
+Claim:
 
 ```bash
-forge script script/BatchSetTraits.s.sol:BatchSetTraits --rpc-url $SEPOLIA_RPC_URL --private-key $PRIVATE_KEY --broadcast -vvvv
+npm run claim-test-re
 ```
 
-Verify contracts:
-
-```bash
-forge verify-contract <RESONANCE_GENESIS_ADDRESS> src/ResonanceGenesis.sol:ResonanceGenesis --chain sepolia --etherscan-api-key $ETHERSCAN_API_KEY --constructor-args <ABI_ENCODED_ARGS>
-forge verify-contract <CHLADNI_NODE_MINER_ADDRESS> src/ChladniNodeMiner.sol:ChladniNodeMiner --chain sepolia --etherscan-api-key $ETHERSCAN_API_KEY --constructor-args <ABI_ENCODED_ARGS>
-```
-
-Use `cast abi-encode "constructor(uint256,uint256,string)" 8888 10000000000000000 "ipfs://<METADATA_CID>/"` for NFT constructor args and `cast abi-encode "constructor(address)" <RESONANCE_GENESIS_ADDRESS>` for the miner.
-
-## Contract Traits
-
-Only compact mining traits are stored on-chain:
-
-```solidity
-struct NodeTraits {
-  uint32 frequency;
-  uint8 modeN;
-  uint8 modeM;
-  uint16 nodeDensityBps;
-  uint16 lineThicknessBps;
-  uint8 rarityTier;
-  bool initialized;
-}
-```
-
-Metadata and images stay on Filebase/IPFS.
-
-## Hashrate Formula
-
-```text
-frequencyWeight = sqrt(frequency) * 100
-modeComplexity = modeN * modeM + abs(modeN - modeM) * 3
-symmetryBonus = 500 if delta <= 1, 250 if delta <= 3
-baseHashrate =
-  frequencyWeight
-  + modeComplexity * 40
-  + nodeDensityBps * 3
-  + lineThicknessBps * 2
-  + symmetryBonus
-hashrate = baseHashrate * rarityMultiplier / 100
-pendingEnergy = hashrate * elapsedSeconds / 1 days
-```
-
-Resonance Energy is a utility point. The project does not promise APY, passive income, guaranteed rewards, or financial return.
+RE is a real SPL token with 9 decimals. The max supply is 1,000,000,000 RE and claims unlock at the 33 RE threshold. RE is utility power, not APY, passive income, profit, or guaranteed financial return.
 
 ## Frontend
 
-```bash
-npm run dev
-npm run typecheck
-npm run lint
-npm run build
-```
-
-The UI includes a persisted theme system with:
-
-- `terminal-matrix-sand`
-- `sci-fi-archive`
-- `sand-gold-resonance`
-- `void-neon`
-- `classic-lab`
-
-Theme changes only affect CSS variables and do not alter wallet connection, contract reads, minting, staking, gallery loading, or IPFS metadata fetching.
-
-## Switch to Mainnet Later
-
-Deploy the same Foundry contracts to mainnet, verify them, then update:
-
-```bash
-NEXT_PUBLIC_CHAIN_ID=1
-NEXT_PUBLIC_RPC_URL=<mainnet rpc>
-NEXT_PUBLIC_RESONANCE_GENESIS_ADDRESS=<mainnet nft>
-NEXT_PUBLIC_CHLADNI_NODE_MINER_ADDRESS=<mainnet miner>
-```
-## Solana Devnet Version
-
-This repository now includes a parallel Solana Devnet implementation in `packages/solana`. The EVM/Foundry contracts remain intact.
-
-For the full Solana flow from WSL setup through Devnet deploy, RE mint creation, Metaplex NFT minting, staking, and claim testing, see:
-
-```text
-docs/SOLANA_DEVNET_STEP_BY_STEP.md
-```
-
-### Setup
-
-Install Solana CLI and Anchor, then configure Devnet:
-
-```bash
-solana config set --url devnet
-solana airdrop 2
-```
-
-Add Solana environment variables:
+Create `apps/web/.env.local`:
 
 ```env
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
 NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
-NEXT_PUBLIC_RESONANCE_SOLANA_PROGRAM_ID=
-NEXT_PUBLIC_RE_MINT_ADDRESS=
-NEXT_PUBLIC_CHLADNI_COLLECTION_MINT=
+NEXT_PUBLIC_RESONANCE_SOLANA_PROGRAM_ID=bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7
+NEXT_PUBLIC_RE_MINT_ADDRESS=PASTE_RE_MINT
+NEXT_PUBLIC_CHLADNI_COLLECTION_MINT=PASTE_COLLECTION_MINT
 NEXT_PUBLIC_SOLANA_EXPLORER_CLUSTER=devnet
-
-SOLANA_NETWORK=devnet
-SOLANA_RPC_URL=https://api.devnet.solana.com
-RESONANCE_SOLANA_PROGRAM_ID=
-RE_MINT_ADDRESS=
-CHLADNI_COLLECTION_MINT=
+NEXT_PUBLIC_IPFS_GATEWAY=https://ipfs.filebase.io/ipfs/
+NEXT_PUBLIC_METADATA_CID=PASTE_METADATA_CID
+NEXT_PUBLIC_IMAGE_CID=PASTE_IMAGE_CID
+NEXT_PUBLIC_SOLANA_IMAGE_CID=PASTE_IMAGE_CID
+NEXT_PUBLIC_SOLANA_MINT_METADATA_TOKEN_ID=1
+NEXT_PUBLIC_SOLANA_IMAGE_FALLBACK_COUNT=20
 ```
 
-### Commands
+Run:
 
 ```bash
-npm run solana:build
-npm run solana:test
-npm run solana:deploy:devnet
-npm run solana:create-re-token
-npm run solana:initialize
-npm run solana:mint-samples
-npm run solana:set-traits
+npm run dev
 ```
 
-RE on Solana is designed as a real SPL token with 9 decimals and a 1,000,000,000 RE max supply. Claims unlock at 33 RE. RE is utility power, not APY, passive income, profit, or a guaranteed financial return.
+Solana routes:
+
+```text
+/solana
+/solana/mint
+/solana/gallery
+/solana/stake
+/solana/node/[mint]
+```
+
+The frontend reads wallet NFTs, Metaplex metadata, NodeTraits PDAs, StakeAccount PDAs, and RE SPL balances from Solana/SPL accounts. It should show setup-required states if environment values are missing.
+
+## Validation Commands
+
+```bash
+npm run gen:scientific:v3:test
+npm run svg:png:v3
+npm run validate:scientific:v3
+npm run solana:build
+npm run solana:test
+npm run typecheck
+npm run build
+```
+
+## Full Docs
+
+```text
+docs/SOLANA_DEVNET_STEP_BY_STEP.md
+docs/SOLANA_MIGRATION_PLAN.md
+docs/SCIENTIFIC_CHLADNI_GENERATOR.md
+docs/FILEBASE_PRODUCTION_FLOW.md
+```
+
+## Legacy EVM Reference
+
+The Sepolia/EVM implementation remains under:
+
+```text
+packages/contracts
+```
+
+Legacy commands:
+
+```bash
+npm run forge:build
+npm run forge:test
+```
+
+Legacy deployment scripts remain available in `packages/contracts/script`. Use the scientific `onchain-traits.json` with the EVM batch trait script when maintaining the EVM reference.
+
+Do not remove EVM files from this branch; they are retained for historical compatibility and future reference.

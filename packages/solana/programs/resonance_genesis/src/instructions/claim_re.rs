@@ -13,7 +13,11 @@ pub struct ClaimRe<'info> {
     pub global_config: Account<'info, GlobalConfig>,
     #[account(mut, address = global_config.re_mint @ ResonanceError::InvalidReMint)]
     pub re_mint: Account<'info, Mint>,
-    #[account(mut, constraint = user_re_account.mint == re_mint.key() @ ResonanceError::InvalidReMint)]
+    #[account(
+        mut,
+        constraint = user_re_account.mint == re_mint.key() @ ResonanceError::InvalidReMint,
+        constraint = user_re_account.owner == owner.key() @ ResonanceError::Unauthorized
+    )]
     pub user_re_account: Account<'info, TokenAccount>,
     #[account(seeds = [b"node_traits", stake_account.nft_mint.as_ref()], bump = node_traits.bump)]
     pub node_traits: Account<'info, NodeTraits>,

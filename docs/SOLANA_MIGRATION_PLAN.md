@@ -1,6 +1,6 @@
 # Resonance Genesis Solana Migration Plan
 
-This branch adds a parallel Solana Devnet implementation. It does not delete or replace the existing EVM, Foundry, wagmi, RainbowKit, waitlist, news, docs, or theme system.
+This branch makes Solana Devnet the primary active implementation. It does not delete the existing EVM, Foundry, wagmi, RainbowKit, waitlist, news, docs, or theme system. EVM is retained as Legacy EVM Reference.
 
 ## Reused From EVM Version
 
@@ -25,6 +25,15 @@ This branch adds a parallel Solana Devnet implementation. It does not delete or 
 EVM uses ERC721, ERC20, and a Solidity staking contract. Solana uses SPL tokens, PDAs, token vault accounts, and an Anchor program.
 
 MongoDB is not source of truth. It can cache metadata and events, while Solana program accounts and SPL token accounts remain authoritative.
+
+## Locked Source Of Truth
+
+- Visual NFT source: scientific generator V3
+- NFT metadata source: Filebase metadata CID
+- Mining trait source: generated `onchain-traits.json` written to NodeTraits PDAs
+- RE source: real SPL token mint
+- Dashboard source: Solana accounts and SPL token accounts
+- MongoDB/API: cache only
 
 ## Devnet Roadmap
 

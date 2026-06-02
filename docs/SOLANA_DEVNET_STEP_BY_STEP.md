@@ -2,6 +2,8 @@
 
 This guide starts from a fresh WSL terminal and ends with a real Devnet stake and RE claim test.
 
+Solana Devnet is the active branch path. EVM/Sepolia is retained as Legacy EVM Reference.
+
 ## 1. Open WSL And Enter The Repo
 
 ```bash
@@ -45,6 +47,8 @@ export SOLANA_RPC_URL=https://api.devnet.solana.com
 export SOLANA_KEYPAIR=/home/dimassell/.config/solana/id.json
 export RESONANCE_SOLANA_PROGRAM_ID=bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7
 ```
+
+RE, NFT, staking, and dashboard state are read from Solana/SPL accounts. MongoDB/API cache is optional and must not be treated as source of truth.
 
 Optional metadata envs:
 

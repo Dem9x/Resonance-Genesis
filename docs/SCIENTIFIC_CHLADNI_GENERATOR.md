@@ -166,6 +166,8 @@ For Solana Devnet, use:
 output_scientific_collection_v3/chladni-nodes/onchain-traits.json
 ```
 
+This file is the mining trait source of truth. Metadata is for visual display and collection indexing; the Anchor miner program uses NodeTraits PDAs.
+
 Set traits for generated or minted node mints:
 
 ```bash

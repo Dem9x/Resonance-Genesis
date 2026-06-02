@@ -1,5 +1,5 @@
 import * as anchor from "@coral-xyz/anchor";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, SendTransactionError } from "@solana/web3.js";
 import { getProgram, getProvider, globalConfigPda, loadCache, saveCache, systemProgram } from "./lib";
 
 async function main() {
@@ -18,20 +18,42 @@ async function main() {
   const program = getProgram(provider);
   const [globalConfig] = globalConfigPda();
   const energyScale = Number(process.env.ENERGY_SCALE || "86400");
+  const existingConfig = await provider.connection.getAccountInfo(globalConfig);
 
-  const signature = await program.methods
-    .initialize({
-      treasury: payer.publicKey,
-      energyScale: new anchor.BN(energyScale),
-    })
-    .accounts({
-      authority: payer.publicKey,
-      reMint: new PublicKey(reMintAddress),
-      collectionMint: new PublicKey(collectionMintAddress),
-      globalConfig,
-      systemProgram,
-    })
-    .rpc();
+  if (existingConfig) {
+    saveCache({
+      reMintAddress,
+      collectionMint: collectionMintAddress,
+      globalConfig: globalConfig.toBase58(),
+    });
+    console.log("Global config already initialized");
+    console.log(`GLOBAL_CONFIG=${globalConfig.toBase58()}`);
+    process.exit(0);
+  }
+
+  let signature: string;
+  try {
+    signature = await program.methods
+      .initialize({
+        treasury: payer.publicKey,
+        energyScale: new anchor.BN(energyScale),
+      })
+      .accounts({
+        authority: payer.publicKey,
+        reMint: new PublicKey(reMintAddress),
+        collectionMint: new PublicKey(collectionMintAddress),
+        globalConfig,
+        systemProgram,
+      })
+      .rpc();
+  } catch (error) {
+    if (error instanceof SendTransactionError) {
+      console.error(error.message);
+      const logs = await error.getLogs(provider.connection).catch(() => error.logs);
+      console.error(logs?.join("\n") || "No transaction logs available.");
+    }
+    throw error;
+  }
 
   saveCache({
     reMintAddress,

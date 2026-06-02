@@ -33,7 +33,7 @@ pub struct StakeNode<'info> {
     #[account(seeds = [b"vault_authority"], bump)]
     pub vault_authority: UncheckedAccount<'info>,
     #[account(
-        init,
+        init_if_needed,
         payer = owner,
         space = StakeAccount::LEN,
         seeds = [b"stake", nft_mint.key().as_ref()],
@@ -47,6 +47,7 @@ pub struct StakeNode<'info> {
 
 pub fn handler(ctx: Context<StakeNode>) -> Result<()> {
     require!(ctx.accounts.node_traits.initialized, ResonanceError::NodeTraitsNotInitialized);
+    require!(!ctx.accounts.stake_account.active, ResonanceError::AlreadyStaked);
 
     token::transfer(
         CpiContext::new(
