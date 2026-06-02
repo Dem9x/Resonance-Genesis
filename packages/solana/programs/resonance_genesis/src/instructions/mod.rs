@@ -5,12 +5,12 @@ pub mod stake_node;
 pub mod unstake_node;
 pub mod update_config;
 
-pub use claim_re::*;
-pub use initialize::*;
-pub use set_traits::*;
-pub use stake_node::*;
-pub use unstake_node::*;
-pub use update_config::*;
+pub use claim_re::ClaimRe;
+pub use initialize::{Initialize, InitializeArgs};
+pub use set_traits::{SetNodeTraits, SetNodeTraitsArgs};
+pub use stake_node::StakeNode;
+pub use unstake_node::UnstakeNode;
+pub use update_config::{UpdateConfig, UpdateConfigArgs};
 
 use crate::errors::ResonanceError;
 use crate::state::NodeTraits;
