@@ -5,12 +5,12 @@ pub mod instructions;
 pub mod state;
 
 pub use instructions::{ClaimRe, Initialize, InitializeArgs, SetNodeTraits, SetNodeTraitsArgs, StakeNode, UnstakeNode, UpdateConfig, UpdateConfigArgs};
-pub use instructions::claim_re::__client_accounts_claim_re;
-pub use instructions::initialize::__client_accounts_initialize;
-pub use instructions::set_traits::__client_accounts_set_node_traits;
-pub use instructions::stake_node::__client_accounts_stake_node;
-pub use instructions::unstake_node::__client_accounts_unstake_node;
-pub use instructions::update_config::__client_accounts_update_config;
+use instructions::claim_re::__client_accounts_claim_re;
+use instructions::initialize::__client_accounts_initialize;
+use instructions::set_traits::__client_accounts_set_node_traits;
+use instructions::stake_node::__client_accounts_stake_node;
+use instructions::unstake_node::__client_accounts_unstake_node;
+use instructions::update_config::__client_accounts_update_config;
 
 declare_id!("bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7");
 
