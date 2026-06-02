@@ -47,6 +47,10 @@ export SOLANA_RPC_URL=https://api.devnet.solana.com
 export SOLANA_KEYPAIR=/home/dimassell/.config/solana/id.json
 export RESONANCE_SOLANA_PROGRAM_ID=bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7
 export SOLANA_CREATOR_ADDRESS=2ryR7rmGYP2pcjv6WWLTG3Ats3RpfKshkZ5EJTMeMCzC
+export CREATOR_WALLET=2ryR7rmGYP2pcjv6WWLTG3Ats3RpfKshkZ5EJTMeMCzC
+export CREATOR_TREASURY=2ryR7rmGYP2pcjv6WWLTG3Ats3RpfKshkZ5EJTMeMCzC
+export NFT_ROYALTY_BPS=500
+export MINT_PRICE_LAMPORTS=10000000
 ```
 
 RE, NFT, staking, and dashboard state are read from Solana/SPL accounts. MongoDB/API cache is optional and must not be treated as source of truth.
@@ -64,6 +68,13 @@ If `METADATA_CID` is set, node metadata URIs become:
 ipfs://<METADATA_CID>/1.json
 ipfs://<METADATA_CID>/2.json
 ```
+
+Royalty and primary sale envs:
+
+- `CREATOR_WALLET`: written into Token Metadata creators array.
+- `CREATOR_TREASURY`: receives optional primary mint SOL payments.
+- `NFT_ROYALTY_BPS`: secondary royalty metadata in basis points. `500` equals `5%`.
+- `MINT_PRICE_LAMPORTS`: primary mint fee amount. `10000000` equals `0.01 SOL`.
 
 ## 4. Build And Deploy The Anchor Program
 
@@ -200,6 +211,23 @@ Metaplex creator defaults to:
 ```
 
 If the script signer is that same wallet, the creator is marked verified. If a user wallet mints from the frontend, the project creator address is still written, but it cannot be marked verified unless the project wallet also signs or a separate verification flow is added.
+
+By default, Devnet script sample mints are free. To charge the configured primary mint price and route it to `CREATOR_TREASURY`, run:
+
+```bash
+export SAMPLE_NODE_COUNT=1
+npm run mint-samples -- --charge-mint-price
+```
+
+The script validates each minted metadata account after mint:
+
+- `sellerFeeBasisPoints == NFT_ROYALTY_BPS`
+- `creators[0].address == CREATOR_WALLET`
+- `creators[0].share == 100`
+
+Frontend Solana minting charges `NEXT_PUBLIC_MINT_PRICE_SOL` in the same wallet transaction that creates the NFT.
+
+Important: Token Metadata royalties are metadata. Actual royalty enforcement depends on marketplace support. For stricter future royalty control, consider Metaplex Core Royalties plugin or programmable NFT rule sets.
 
 ```bash
 export SAMPLE_NODE_COUNT=20

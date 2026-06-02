@@ -5,7 +5,14 @@ import { useConnection, useWallet } from "@solana/wallet-adapter-react";
 import { CheckCircle2, ExternalLink, Loader2, Sparkles, TriangleAlert } from "lucide-react";
 import { SolanaConnectButton } from "@/components/solana/SolanaConnectButton";
 import { SolanaNetworkBadge } from "@/components/solana/SolanaNetworkBadge";
-import { chladniCollectionMint, resonanceProgramId, solanaExplorerCluster } from "@/solana/constants";
+import {
+  chladniCollectionMint,
+  mintPriceSol,
+  nftRoyaltyBps,
+  resonanceProgramId,
+  solanaCreatorTreasury,
+  solanaExplorerCluster,
+} from "@/solana/constants";
 import { mintSolanaChladniNode, type SolanaMintResult } from "@/solana/mintClient";
 import { PublicKey } from "@solana/web3.js";
 
@@ -16,6 +23,7 @@ export function SolanaMintPanel() {
   const [result, setResult] = useState<SolanaMintResult | undefined>();
   const [error, setError] = useState("");
   const configured = Boolean(resonanceProgramId && chladniCollectionMint);
+  const royaltyPercent = Number.isFinite(nftRoyaltyBps) ? nftRoyaltyBps / 100 : 5;
   const collectionKey = useMemo(() => {
     try {
       return chladniCollectionMint ? new PublicKey(chladniCollectionMint) : undefined;
@@ -72,6 +80,11 @@ export function SolanaMintPanel() {
           <Metric label="Connected Wallet" value={publicKey?.toBase58() || "Not connected"} />
           <Metric label="Program ID" value={resonanceProgramId || "Not configured"} />
           <Metric label="Collection Mint" value={chladniCollectionMint || "Not configured"} />
+          <div className="grid gap-3 md:grid-cols-3">
+            <Metric label="Primary Mint Fee" value={`${mintPriceSol.toLocaleString(undefined, { maximumFractionDigits: 4 })} SOL`} />
+            <Metric label="Creator Royalty" value={`${royaltyPercent.toLocaleString(undefined, { maximumFractionDigits: 2 })}%`} />
+            <Metric label="Creator Treasury" value={shortAddress(solanaCreatorTreasury)} />
+          </div>
         </div>
 
         {!connected ? (
@@ -93,7 +106,7 @@ export function SolanaMintPanel() {
 
         <div className="mt-5 rounded-2xl border border-[var(--warning)]/35 bg-[var(--warning)]/10 p-4 text-sm leading-6 text-[var(--warning)]">
           {configured
-            ? "Live Devnet mint is enabled. Newly minted NFTs are Metaplex NFTs; mining traits must still be set by the authority before staking."
+            ? "Live Devnet mint is enabled. The primary mint fee is transferred to the creator treasury in the mint transaction. Marketplace royalty metadata is stored on the NFT, but enforcement depends on marketplace support."
             : "Configure NEXT_PUBLIC_RESONANCE_SOLANA_PROGRAM_ID and NEXT_PUBLIC_CHLADNI_COLLECTION_MINT first. Existing EVM mint remains available at /mint."}
         </div>
 
@@ -134,4 +147,9 @@ function Metric({ label, value }: { label: string; value: string }) {
       <p className="mt-2 break-all font-mono text-sm font-bold text-[var(--text)]">{value}</p>
     </div>
   );
+}
+
+function shortAddress(value: string) {
+  if (!value) return "Not configured";
+  return value.length > 12 ? `${value.slice(0, 6)}...${value.slice(-4)}` : value;
 }

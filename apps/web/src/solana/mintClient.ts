@@ -21,7 +21,16 @@ import {
   createCreateMasterEditionV3Instruction,
   createCreateMetadataAccountV3Instruction,
 } from "@metaplex-foundation/mpl-token-metadata";
-import { optionalPublicKey, solanaCreatorAddress, solanaMetadataBaseUri, solanaMetadataCid, solanaMintMetadataTokenId } from "@/solana/constants";
+import {
+  mintPriceLamports,
+  nftRoyaltyBps,
+  optionalPublicKey,
+  solanaCreatorAddress,
+  solanaCreatorTreasury,
+  solanaMetadataBaseUri,
+  solanaMetadataCid,
+  solanaMintMetadataTokenId,
+} from "@/solana/constants";
 
 export type SolanaMintResult = {
   signature: string;
@@ -82,8 +91,24 @@ export async function mintSolanaChladniNode({
   const lamports = await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
   const creator = optionalPublicKey(solanaCreatorAddress) || payer;
   const creatorVerified = creator.equals(payer);
+  const treasury = optionalPublicKey(solanaCreatorTreasury);
+  const royaltyBps = Number.isFinite(nftRoyaltyBps) ? Math.max(0, Math.min(10_000, nftRoyaltyBps)) : 500;
+  if (mintPriceLamports > 0 && !treasury) {
+    throw new Error("Creator treasury is required when primary mint fee is enabled.");
+  }
 
-  const transaction = new Transaction().add(
+  const transaction = new Transaction();
+  if (treasury && mintPriceLamports > 0) {
+    transaction.add(
+      SystemProgram.transfer({
+        fromPubkey: payer,
+        toPubkey: treasury,
+        lamports: mintPriceLamports,
+      }),
+    );
+  }
+
+  transaction.add(
     SystemProgram.createAccount({
       fromPubkey: payer,
       newAccountPubkey: mint.publicKey,
@@ -110,7 +135,7 @@ export async function mintSolanaChladniNode({
             name: "Chladni Node",
             symbol: "NODE",
             uri: metadataUri,
-            sellerFeeBasisPoints: 0,
+            sellerFeeBasisPoints: royaltyBps,
             creators: [{ address: creator, verified: creatorVerified, share: 100 }],
             collection: collectionMint ? { verified: false, key: collectionMint } : null,
             uses: null,

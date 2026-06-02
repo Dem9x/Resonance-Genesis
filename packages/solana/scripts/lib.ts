@@ -14,6 +14,7 @@ import {
   createCreateMasterEditionV3Instruction,
   createCreateMetadataAccountV3Instruction,
 } from "@metaplex-foundation/mpl-token-metadata";
+import { Metadata } from "@metaplex-foundation/mpl-token-metadata/dist/src/generated/accounts/Metadata";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -59,8 +60,9 @@ export const programId = new PublicKey(
 export const rpcUrl = process.env.SOLANA_RPC_URL || clusterApiUrl("devnet");
 export const keypairPath = process.env.SOLANA_KEYPAIR || `${os.homedir()}/.config/solana/id.json`;
 export const defaultCreatorAddress = "2ryR7rmGYP2pcjv6WWLTG3Ats3RpfKshkZ5EJTMeMCzC";
-export const configuredCreatorAddress = process.env.SOLANA_CREATOR_ADDRESS || process.env.METAPLEX_CREATOR_ADDRESS || defaultCreatorAddress;
+export const configuredCreatorAddress = process.env.CREATOR_WALLET || process.env.SOLANA_CREATOR_ADDRESS || process.env.METAPLEX_CREATOR_ADDRESS || defaultCreatorAddress;
 export const configuredUpdateAuthorityAddress = process.env.SOLANA_UPDATE_AUTHORITY_ADDRESS || "";
+export const configuredRoyaltyBps = Number(process.env.NFT_ROYALTY_BPS || "500");
 
 export function loadPayer() {
   return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(fs.readFileSync(keypairPath, "utf8"))));
@@ -125,6 +127,7 @@ export async function createNftMetadata(args: {
   collectionMint?: PublicKey;
   creatorAddress?: PublicKey;
   updateAuthority?: PublicKey;
+  sellerFeeBasisPoints?: number;
 }) {
   const [metadata] = metadataPda(args.mint);
   const [masterEdition] = masterEditionPda(args.mint);
@@ -133,6 +136,12 @@ export async function createNftMetadata(args: {
   const requestedUpdateAuthority = args.updateAuthority || (configuredUpdateAuthorityAddress ? new PublicKey(configuredUpdateAuthorityAddress) : args.payer.publicKey);
   const updateAuthority = requestedUpdateAuthority.equals(args.payer.publicKey) ? requestedUpdateAuthority : args.payer.publicKey;
   const creatorVerified = creatorAddress.equals(args.payer.publicKey);
+  const sellerFeeBasisPoints = Number.isFinite(args.sellerFeeBasisPoints)
+    ? Number(args.sellerFeeBasisPoints)
+    : configuredRoyaltyBps;
+  if (sellerFeeBasisPoints < 0 || sellerFeeBasisPoints > 10_000) {
+    throw new Error(`NFT_ROYALTY_BPS must be between 0 and 10000. Received ${sellerFeeBasisPoints}`);
+  }
   const transaction = new Transaction().add(
     createCreateMetadataAccountV3Instruction(
       {
@@ -150,7 +159,7 @@ export async function createNftMetadata(args: {
             name: args.name,
             symbol: args.symbol,
             uri: args.uri,
-            sellerFeeBasisPoints: 0,
+            sellerFeeBasisPoints,
             creators: [{ address: creatorAddress, verified: creatorVerified, share: 100 }],
             collection,
             uses: null,
@@ -188,6 +197,37 @@ export async function createNftMetadata(args: {
     metadata,
     masterEdition,
     signature,
+    sellerFeeBasisPoints,
+    creatorAddress: creatorAddress.toBase58(),
+    creatorVerified,
+  };
+}
+
+export async function validateNftMetadata(args: {
+  connection: Connection;
+  metadata: PublicKey;
+  expectedSellerFeeBasisPoints: number;
+  expectedCreator: PublicKey;
+}) {
+  const account = await Metadata.fromAccountAddress(args.connection, args.metadata, "confirmed");
+  const creator = account.data.creators?.[0];
+  if (account.data.sellerFeeBasisPoints !== args.expectedSellerFeeBasisPoints) {
+    throw new Error(`Metadata royalty mismatch: expected ${args.expectedSellerFeeBasisPoints}, got ${account.data.sellerFeeBasisPoints}`);
+  }
+  if (!creator) {
+    throw new Error("Metadata creator missing");
+  }
+  if (!creator.address.equals(args.expectedCreator)) {
+    throw new Error(`Metadata creator mismatch: expected ${args.expectedCreator.toBase58()}, got ${creator.address.toBase58()}`);
+  }
+  if (creator.share !== 100) {
+    throw new Error(`Metadata creator share mismatch: expected 100, got ${creator.share}`);
+  }
+  return {
+    sellerFeeBasisPoints: account.data.sellerFeeBasisPoints,
+    creator: creator.address.toBase58(),
+    creatorVerified: creator.verified,
+    creatorShare: creator.share,
   };
 }
 

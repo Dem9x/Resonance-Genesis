@@ -1,8 +1,19 @@
 import { createMint, getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
-import { PublicKey } from "@solana/web3.js";
+import { PublicKey, SystemProgram, Transaction, sendAndConfirmTransaction } from "@solana/web3.js";
 import fs from "node:fs";
 import path from "node:path";
-import { createNftMetadata, getConnection, loadCache, loadPayer, metadataUriFor, saveCache, type CachedNode } from "./lib";
+import {
+  configuredCreatorAddress,
+  configuredRoyaltyBps,
+  createNftMetadata,
+  getConnection,
+  loadCache,
+  loadPayer,
+  metadataUriFor,
+  saveCache,
+  validateNftMetadata,
+  type CachedNode,
+} from "./lib";
 
 const DEFAULT_METADATA_DIR = path.resolve(process.cwd(), "..", "..", "output_scientific_collection_v3", "chladni-nodes", "metadata");
 const DEFAULT_ONCHAIN_TRAITS_PATH = path.resolve(process.cwd(), "..", "..", "output_scientific_collection_v3", "chladni-nodes", "onchain-traits.json");
@@ -68,6 +79,32 @@ function loadMetadataName(tokenId: number, metadataDir: string) {
   return metadata.name || `Chladni Node #${tokenId}`;
 }
 
+function shouldChargeMintPrice() {
+  return process.argv.includes("--charge-mint-price");
+}
+
+async function sendPrimaryMintPayment({
+  connection,
+  payer,
+  treasury,
+  lamports,
+}: {
+  connection: ReturnType<typeof getConnection>;
+  payer: ReturnType<typeof loadPayer>;
+  treasury: PublicKey;
+  lamports: number;
+}) {
+  if (lamports <= 0) return undefined;
+  const tx = new Transaction().add(
+    SystemProgram.transfer({
+      fromPubkey: payer.publicKey,
+      toPubkey: treasury,
+      lamports,
+    }),
+  );
+  return sendAndConfirmTransaction(connection, tx, [payer], { commitment: "confirmed" });
+}
+
 async function main() {
   const connection = getConnection();
   const payer = loadPayer();
@@ -78,12 +115,24 @@ async function main() {
   const existing = cache.sampleNodes || [];
   const sampleNodes: CachedNode[] = [...existing];
   const collectionMint = process.env.CHLADNI_COLLECTION_MINT || cache.collectionMint;
+  const creatorWallet = new PublicKey(process.env.CREATOR_WALLET || configuredCreatorAddress);
+  const royaltyBps = Number(process.env.NFT_ROYALTY_BPS || configuredRoyaltyBps || 500);
+  const chargeMintPrice = shouldChargeMintPrice();
+  const mintPriceLamports = Number(process.env.MINT_PRICE_LAMPORTS || "10000000");
+  const creatorTreasury = process.env.CREATOR_TREASURY ? new PublicKey(process.env.CREATOR_TREASURY) : creatorWallet;
 
   if (!Number.isFinite(count) || count <= 0) throw new Error("SAMPLE_NODE_COUNT must be greater than 0");
+  if (!Number.isFinite(royaltyBps) || royaltyBps < 0 || royaltyBps > 10_000) throw new Error("NFT_ROYALTY_BPS must be between 0 and 10000");
+  if (!Number.isFinite(mintPriceLamports) || mintPriceLamports < 0) throw new Error("MINT_PRICE_LAMPORTS must be zero or greater");
   if (!fs.existsSync(metadataDir)) throw new Error(`Scientific metadata directory not found: ${metadataDir}`);
   if (!fs.existsSync(traitsPath)) throw new Error(`Scientific on-chain traits file not found: ${traitsPath}`);
 
   console.log(`Minting ${count} scientific Chladni Node NFT(s) from ${metadataDir}`);
+  console.log(`CREATOR_WALLET=${creatorWallet.toBase58()}`);
+  console.log(`NFT_ROYALTY_BPS=${royaltyBps}`);
+  console.log(`CREATOR_TREASURY=${creatorTreasury.toBase58()}`);
+  console.log(`MINT_PRICE_LAMPORTS=${mintPriceLamports}`);
+  console.log(`CHARGE_MINT_PRICE=${chargeMintPrice ? "true" : "false"}`);
 
   for (let i = 0; i < count; i += 1) {
     const tokenId = existing.length + i + 1;
@@ -92,6 +141,10 @@ async function main() {
     const mint = await createMint(connection, payer, payer.publicKey, payer.publicKey, 0);
     const ownerAta = await getOrCreateAssociatedTokenAccount(connection, payer, mint, payer.publicKey);
     await mintTo(connection, payer, mint, ownerAta.address, payer, 1);
+    if (chargeMintPrice) {
+      const paymentSignature = await sendPrimaryMintPayment({ connection, payer, treasury: creatorTreasury, lamports: mintPriceLamports });
+      console.log(`NODE_${tokenId}_PRIMARY_PAYMENT_SIGNATURE=${paymentSignature}`);
+    }
 
     const uri = metadataUriFor(tokenId);
     const metadata = await createNftMetadata({
@@ -102,6 +155,14 @@ async function main() {
       symbol: "NODE",
       uri,
       collectionMint: collectionMint ? new PublicKey(collectionMint) : undefined,
+      creatorAddress: creatorWallet,
+      sellerFeeBasisPoints: royaltyBps,
+    });
+    const metadataValidation = await validateNftMetadata({
+      connection,
+      metadata: metadata.metadata,
+      expectedCreator: creatorWallet,
+      expectedSellerFeeBasisPoints: royaltyBps,
     });
 
     sampleNodes.push({
@@ -125,6 +186,10 @@ async function main() {
     console.log(`NODE_${tokenId}_METADATA=${metadata.metadata.toBase58()}`);
     console.log(`NODE_${tokenId}_MASTER_EDITION=${metadata.masterEdition.toBase58()}`);
     console.log(`NODE_${tokenId}_METADATA_URI=${uri}`);
+    console.log(`NODE_${tokenId}_ROYALTY_BPS=${metadataValidation.sellerFeeBasisPoints}`);
+    console.log(`NODE_${tokenId}_CREATOR=${metadataValidation.creator}`);
+    console.log(`NODE_${tokenId}_CREATOR_SHARE=${metadataValidation.creatorShare}`);
+    console.log(`NODE_${tokenId}_CREATOR_VERIFIED=${metadataValidation.creatorVerified}`);
   }
 
   saveCache({ sampleNodes });

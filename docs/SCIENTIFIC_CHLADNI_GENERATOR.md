@@ -168,6 +168,32 @@ output_scientific_collection_v3/chladni-nodes/onchain-traits.json
 
 This file is the mining trait source of truth. Metadata is for visual display and collection indexing; the Anchor miner program uses NodeTraits PDAs.
 
+## Solana Creator Revenue And Royalties
+
+Solana Devnet minting uses Token Metadata royalty fields:
+
+- `sellerFeeBasisPoints`: defaults to `500`, which represents `5%`.
+- `creators[0].address`: configured by `CREATOR_WALLET`.
+- `creators[0].share`: `100`.
+
+Primary mint fees are separate from secondary royalty metadata. The primary mint fee is configured by:
+
+```bash
+export CREATOR_TREASURY=PASTE_TREASURY_WALLET
+export MINT_PRICE_LAMPORTS=10000000
+```
+
+Script sample mints stay free by default. To charge the primary mint fee in the Devnet script:
+
+```bash
+cd packages/solana
+npm run mint-samples -- --charge-mint-price
+```
+
+Frontend Solana minting sends the public mint fee to `NEXT_PUBLIC_CREATOR_TREASURY` in the same transaction that creates the NFT.
+
+Royalty metadata is not guaranteed enforcement. Marketplaces decide whether and how to honor Token Metadata royalties. For stricter future control, consider Metaplex Core Royalties plugin or programmable NFT rule sets.
+
 Set traits for generated or minted node mints:
 
 ```bash
