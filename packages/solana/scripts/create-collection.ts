@@ -14,12 +14,11 @@ async function main() {
     collectionTokenAccount: collectionAta.address.toBase58(),
   });
 
-  console.log("CHLADNI_COLLECTION_MINT=", collectionMint.toBase58());
-  console.log("CHLADNI_COLLECTION_TOKEN_ACCOUNT=", collectionAta.address.toBase58());
+  console.log(`CHLADNI_COLLECTION_MINT=${collectionMint.toBase58()}`);
+  console.log(`CHLADNI_COLLECTION_TOKEN_ACCOUNT=${collectionAta.address.toBase58()}`);
 }
 
 main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
-

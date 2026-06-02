@@ -12,12 +12,11 @@ async function main() {
     reMintAuthorityPda: mintAuthority.toBase58(),
   });
 
-  console.log("RE_MINT_ADDRESS=", mint.toBase58());
-  console.log("RE_MINT_AUTHORITY_PDA=", mintAuthority.toBase58());
+  console.log(`RE_MINT_ADDRESS=${mint.toBase58()}`);
+  console.log(`RE_MINT_AUTHORITY_PDA=${mintAuthority.toBase58()}`);
 }
 
 main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
-

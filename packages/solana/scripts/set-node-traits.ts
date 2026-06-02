@@ -35,11 +35,11 @@ async function main() {
       })
       .rpc();
 
-    console.log(`NODE_${node.tokenId}_TRAITS_PDA=`, nodeTraits.toBase58());
-    console.log(`NODE_${node.tokenId}_SET_TRAITS_SIGNATURE=`, signature);
+    console.log(`NODE_${node.tokenId}_TRAITS_PDA=${nodeTraits.toBase58()}`);
+    console.log(`NODE_${node.tokenId}_SET_TRAITS_SIGNATURE=${signature}`);
   }
 
-  console.log("TRAITS_SET_COUNT=", nodes.length);
+  console.log(`TRAITS_SET_COUNT=${nodes.length}`);
 }
 
 main().catch((error) => {

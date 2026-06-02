@@ -40,12 +40,11 @@ async function main() {
     initializedSignature: signature,
   });
 
-  console.log("GLOBAL_CONFIG=", globalConfig.toBase58());
-  console.log("INITIALIZE_SIGNATURE=", signature);
+  console.log(`GLOBAL_CONFIG=${globalConfig.toBase58()}`);
+  console.log(`INITIALIZE_SIGNATURE=${signature}`);
 }
 
 main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
-

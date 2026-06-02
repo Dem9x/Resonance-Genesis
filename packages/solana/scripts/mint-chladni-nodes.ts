@@ -39,16 +39,15 @@ async function main() {
       ...traits,
     });
 
-    console.log(`NODE_${tokenId}_MINT=`, mint.toBase58());
-    console.log(`NODE_${tokenId}_TOKEN_ACCOUNT=`, ownerAta.address.toBase58());
+    console.log(`NODE_${tokenId}_MINT=${mint.toBase58()}`);
+    console.log(`NODE_${tokenId}_TOKEN_ACCOUNT=${ownerAta.address.toBase58()}`);
   }
 
   saveCache({ sampleNodes });
-  console.log("SAMPLE_NODE_COUNT=", sampleNodes.length);
+  console.log(`SAMPLE_NODE_COUNT=${sampleNodes.length}`);
 }
 
 main().catch((error) => {
   console.error(error);
   process.exit(1);
 });
-
