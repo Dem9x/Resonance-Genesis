@@ -1,14 +1,49 @@
 "use client";
 
-import { useWallet } from "@solana/wallet-adapter-react";
-import { Sparkles } from "lucide-react";
+import { useMemo, useState } from "react";
+import { useConnection, useWallet } from "@solana/wallet-adapter-react";
+import { CheckCircle2, ExternalLink, Loader2, Sparkles, TriangleAlert } from "lucide-react";
 import { SolanaConnectButton } from "@/components/solana/SolanaConnectButton";
 import { SolanaNetworkBadge } from "@/components/solana/SolanaNetworkBadge";
-import { chladniCollectionMint, resonanceProgramId } from "@/solana/constants";
+import { chladniCollectionMint, resonanceProgramId, solanaExplorerCluster } from "@/solana/constants";
+import { mintSolanaChladniNode, type SolanaMintResult } from "@/solana/mintClient";
+import { PublicKey } from "@solana/web3.js";
 
 export function SolanaMintPanel() {
-  const { connected, publicKey } = useWallet();
+  const { connection } = useConnection();
+  const { connected, publicKey, sendTransaction } = useWallet();
+  const [status, setStatus] = useState<"idle" | "waiting" | "pending" | "success" | "error">("idle");
+  const [result, setResult] = useState<SolanaMintResult | undefined>();
+  const [error, setError] = useState("");
   const configured = Boolean(resonanceProgramId && chladniCollectionMint);
+  const collectionKey = useMemo(() => {
+    try {
+      return chladniCollectionMint ? new PublicKey(chladniCollectionMint) : undefined;
+    } catch {
+      return undefined;
+    }
+  }, []);
+
+  async function handleMint() {
+    if (!publicKey || !collectionKey) return;
+    setStatus("waiting");
+    setError("");
+    setResult(undefined);
+    try {
+      setStatus("pending");
+      const minted = await mintSolanaChladniNode({
+        connection,
+        payer: publicKey,
+        collectionMint: collectionKey,
+        sendTransaction,
+      });
+      setResult(minted);
+      setStatus("success");
+    } catch (caught) {
+      setError(caught instanceof Error ? caught.message : "Mint transaction failed.");
+      setStatus("error");
+    }
+  }
 
   return (
     <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
@@ -47,18 +82,46 @@ export function SolanaMintPanel() {
         ) : (
           <button
             type="button"
-            disabled
-            className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-full px-6 py-4 font-black opacity-60 theme-button"
+            disabled={!configured || status === "waiting" || status === "pending"}
+            onClick={handleMint}
+            className="inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-4 font-black disabled:cursor-not-allowed disabled:opacity-60 theme-button"
           >
-            <Sparkles className="h-5 w-5" /> Mint opens after Devnet collection config
+            {status === "waiting" || status === "pending" ? <Loader2 className="h-5 w-5 animate-spin" /> : <Sparkles className="h-5 w-5" />}
+            {status === "waiting" ? "Waiting for wallet" : status === "pending" ? "Confirming Devnet mint" : "Mint Chladni Node"}
           </button>
         )}
 
         <div className="mt-5 rounded-2xl border border-[var(--warning)]/35 bg-[var(--warning)]/10 p-4 text-sm leading-6 text-[var(--warning)]">
           {configured
-            ? "Collection config detected. Wire the mint-chladni-nodes script or Metaplex mint transaction client to enable live Devnet minting."
+            ? "Live Devnet mint is enabled. Newly minted NFTs are Metaplex NFTs; mining traits must still be set by the authority before staking."
             : "Configure NEXT_PUBLIC_RESONANCE_SOLANA_PROGRAM_ID and NEXT_PUBLIC_CHLADNI_COLLECTION_MINT first. Existing EVM mint remains available at /mint."}
         </div>
+
+        {status === "success" && result ? (
+          <div className="mt-5 rounded-2xl border border-[var(--success)]/35 bg-[var(--success)]/10 p-4 text-sm leading-6 text-[var(--success)]">
+            <div className="flex items-center gap-2 font-black">
+              <CheckCircle2 className="h-4 w-4" /> Mint confirmed
+            </div>
+            <p className="mt-2 break-all font-mono text-xs text-[var(--text)]">NFT_MINT={result.mint}</p>
+            <a
+              href={`https://explorer.solana.com/tx/${result.signature}?cluster=${solanaExplorerCluster}`}
+              target="_blank"
+              rel="noreferrer"
+              className="mt-3 inline-flex items-center gap-2 font-bold text-[var(--accent)]"
+            >
+              View transaction <ExternalLink className="h-4 w-4" />
+            </a>
+          </div>
+        ) : null}
+
+        {status === "error" ? (
+          <div className="mt-5 rounded-2xl border border-[var(--danger)]/35 bg-[var(--danger)]/10 p-4 text-sm leading-6 text-[var(--danger)]">
+            <div className="flex items-center gap-2 font-black">
+              <TriangleAlert className="h-4 w-4" /> Mint failed
+            </div>
+            <p className="mt-2 break-words">{error}</p>
+          </div>
+        ) : null}
       </div>
     </div>
   );
