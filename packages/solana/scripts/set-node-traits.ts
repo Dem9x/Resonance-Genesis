@@ -25,6 +25,19 @@ type TraitInput = {
   patternFamilyHash: number;
 };
 
+type ScientificTraitPayload = {
+  tokenIds?: number[];
+  traits?: Array<{
+    frequency: number;
+    modeN: number;
+    modeM: number;
+    nodeDensityBps: number;
+    lineThicknessBps: number;
+    rarityTier: number;
+    initialized: boolean;
+  }>;
+};
+
 function hashString(input: string) {
   return input.split("").reduce((hash, char) => (Math.imul(hash, 31) + char.charCodeAt(0)) >>> 0, 7);
 }
@@ -43,6 +56,28 @@ function validateTrait(node: TraitInput) {
   }
 }
 
+function traitInputFromScientific(mint: string, tokenId: number, payload: Required<ScientificTraitPayload>) {
+  const traitIndex = payload.tokenIds.indexOf(tokenId);
+  if (traitIndex < 0) {
+    throw new Error(`Token ${tokenId} is not present in onchain traits file.`);
+  }
+
+  const trait = payload.traits[traitIndex];
+  const node = {
+    tokenId,
+    mint,
+    frequency: trait.frequency,
+    modeN: trait.modeN,
+    modeM: trait.modeM,
+    nodeDensityBps: trait.nodeDensityBps,
+    lineThicknessBps: trait.lineThicknessBps,
+    rarityTier: trait.rarityTier,
+    patternFamilyHash: hashString(`scientific-${tokenId}-${trait.modeN}-${trait.modeM}`),
+  };
+  validateTrait(node);
+  return node;
+}
+
 function loadScientificTraits(): TraitInput[] | undefined {
   const requestedPath = process.env.ONCHAIN_TRAITS_PATH;
   const traitsPath = requestedPath || DEFAULT_ONCHAIN_TRAITS_PATH;
@@ -52,18 +87,7 @@ function loadScientificTraits(): TraitInput[] | undefined {
   }
 
   const resolved = path.resolve(process.cwd(), traitsPath);
-  const payload = JSON.parse(fs.readFileSync(resolved, "utf8")) as {
-    tokenIds?: number[];
-    traits?: Array<{
-      frequency: number;
-      modeN: number;
-      modeM: number;
-      nodeDensityBps: number;
-      lineThicknessBps: number;
-      rarityTier: number;
-      initialized: boolean;
-    }>;
-  };
+  const payload = JSON.parse(fs.readFileSync(resolved, "utf8")) as ScientificTraitPayload;
   const mints = (process.env.NFT_MINTS || process.env.NFT_MINT || "")
     .split(",")
     .map((item) => item.trim())
@@ -72,9 +96,16 @@ function loadScientificTraits(): TraitInput[] | undefined {
   if (!payload.tokenIds?.length || !payload.traits?.length) {
     throw new Error(`Invalid onchain traits file: ${resolved}`);
   }
+  const scientificPayload = payload as Required<ScientificTraitPayload>;
   if (mints.length === 0) {
-    if (requestedPath) throw new Error("ONCHAIN_TRAITS_PATH requires NFT_MINTS=mint1,mint2,... or NFT_MINT=mint");
-    return undefined;
+    const cacheNodes = loadCache().sampleNodes || [];
+    if (cacheNodes.length === 0) {
+      if (requestedPath) throw new Error("ONCHAIN_TRAITS_PATH requires NFT_MINTS=mint1,mint2,... or NFT_MINT=mint");
+      return undefined;
+    }
+
+    console.log(`Using ${cacheNodes.length} cached Devnet mint(s) with scientific V3 traits from ${resolved}`);
+    return cacheNodes.map((node) => traitInputFromScientific(node.mint, node.tokenId, scientificPayload));
   }
   if (mints.length !== payload.traits.length && mints.length !== 1) {
     throw new Error(`NFT_MINTS count ${mints.length} must equal traits count ${payload.traits.length}, or use one NFT_MINT for one trait.`);
@@ -82,22 +113,8 @@ function loadScientificTraits(): TraitInput[] | undefined {
 
   const singleTokenId = Number(process.env.TRAIT_TOKEN_ID || payload.tokenIds[0]);
   return mints.map((mint, index) => {
-    const traitIndex = mints.length === 1 ? Math.max(0, payload.tokenIds!.indexOf(singleTokenId)) : index;
-    const trait = payload.traits![traitIndex] || payload.traits![0];
     const tokenId = mints.length === 1 ? singleTokenId : payload.tokenIds![index];
-    const node = {
-      tokenId,
-      mint,
-      frequency: trait.frequency,
-      modeN: trait.modeN,
-      modeM: trait.modeM,
-      nodeDensityBps: trait.nodeDensityBps,
-      lineThicknessBps: trait.lineThicknessBps,
-      rarityTier: trait.rarityTier,
-      patternFamilyHash: hashString(`scientific-${tokenId}-${trait.modeN}-${trait.modeM}`),
-    };
-    validateTrait(node);
-    return node;
+    return traitInputFromScientific(mint, tokenId, scientificPayload);
   });
 }
 
