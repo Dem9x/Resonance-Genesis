@@ -58,6 +58,8 @@ target/
 # generated NFT output
 output/images/
 output/metadata/
+output_scientific_collection_v2/
+output_scientific_collection_v3/
 
 # optional generated data
 # data/items.json

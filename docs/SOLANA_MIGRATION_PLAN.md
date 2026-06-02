@@ -37,6 +37,8 @@ MongoDB is not source of truth. It can cache metadata and events, while Solana p
 7. Claim real SPL RE once claimable RE reaches 33 RE.
 8. Add event indexer for optional MongoDB cache.
 
+Scientific generation note: use `output_scientific_collection_v3/chladni-nodes/onchain-traits.json` with `packages/solana/scripts/set-node-traits.ts` to write deterministic Chladni traits into NodeTraits PDAs.
+
 ## Mainnet Checklist
 
 - Final audit of program authority model

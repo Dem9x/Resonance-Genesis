@@ -170,11 +170,31 @@ The scripts save deployment state in:
 packages/solana/.cache/solana-devnet.json
 ```
 
+To use scientific generator traits, generate V3 first:
+
+```bash
+npm run gen:scientific:v3:test
+```
+
+Then set traits from:
+
+```text
+output_scientific_collection_v3/chladni-nodes/onchain-traits.json
+```
+
 ## 9. Set On-Chain Mining Traits
 
 Solana cannot read JSON metadata directly, so compact mining traits must be stored in NodeTraits PDAs.
 
 ```bash
+npm run set-traits
+```
+
+Or explicitly provide scientific traits and mints:
+
+```bash
+ONCHAIN_TRAITS_PATH=output_scientific_collection_v3/chladni-nodes/onchain-traits.json \
+NFT_MINTS=mint1,mint2,mint3 \
 npm run set-traits
 ```
 

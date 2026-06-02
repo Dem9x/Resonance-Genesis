@@ -24,6 +24,19 @@
     "solana:derive-pdas": "npm run derive-pdas -w @resonance/solana",
     "solana:initialize": "npm run initialize -w @resonance/solana",
     "solana:mint-samples": "npm run mint-samples -w @resonance/solana",
-    "solana:set-traits": "npm run set-traits -w @resonance/solana"
+    "solana:set-traits": "npm run set-traits -w @resonance/solana",
+    "gen:scientific:v2": "node scripts/generate-scientific-collection-v2.mjs --count 1000",
+    "gen:scientific:v3": "node scripts/generate-scientific-collection-v3.mjs --count 1000",
+    "gen:scientific:v2:test": "node scripts/generate-scientific-collection-v2.mjs --count 20",
+    "gen:scientific:v3:test": "node scripts/generate-scientific-collection-v3.mjs --count 20",
+    "svg:png:v2": "node scripts/svg-to-png.mjs --input output_scientific_collection_v2/chladni-nodes/images --output output_scientific_collection_v2/chladni-nodes/png --width 1024 --height 1024",
+    "svg:png:v3": "node scripts/svg-to-png.mjs --input output_scientific_collection_v3/chladni-nodes/images --output output_scientific_collection_v3/chladni-nodes/png --width 1024 --height 1024",
+    "metadata:update:v2": "node scripts/update-metadata-cid.mjs --metadata-dir output_scientific_collection_v2/chladni-nodes/metadata",
+    "metadata:update:v3": "node scripts/update-metadata-cid.mjs --metadata-dir output_scientific_collection_v3/chladni-nodes/metadata",
+    "validate:scientific:v2": "node scripts/validate-scientific-output.mjs --dir output_scientific_collection_v2/chladni-nodes",
+    "validate:scientific:v3": "node scripts/validate-scientific-output.mjs --dir output_scientific_collection_v3/chladni-nodes --require-colorway"
+  },
+  "devDependencies": {
+    "sharp": "^0.34.5"
   }
 }

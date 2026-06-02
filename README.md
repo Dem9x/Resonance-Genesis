@@ -68,6 +68,23 @@ Do not commit private keys.
 7. Add deployed addresses to `apps/web/.env.local`.
 8. Run the Next.js dApp.
 
+## Scientific Chladni Generator
+
+The repo includes a deterministic scientific Chladni generation pipeline in root `scripts/`.
+
+```bash
+npm run gen:scientific:v2:test
+npm run gen:scientific:v3:test
+npm run svg:png:v3
+npm run validate:scientific:v3
+```
+
+Full documentation:
+
+```text
+docs/SCIENTIFIC_CHLADNI_GENERATOR.md
+```
+
 ## Foundry Commands
 
 ```bash
