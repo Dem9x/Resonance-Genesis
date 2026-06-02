@@ -1,3 +1,5 @@
+import { solanaImageCid, solanaImageFallbackCount } from "@/solana/constants";
+
 export function ipfsToHttp(uri?: string) {
   if (!uri) return undefined;
   if (uri.startsWith("ipfs://")) {
@@ -7,11 +9,38 @@ export function ipfsToHttp(uri?: string) {
   return uri;
 }
 
+export function tokenIdFromMetadataUri(uri?: string) {
+  if (!uri) return undefined;
+  return uri.match(/\/(\d+)\.json(?:$|\?)/)?.[1];
+}
+
+export function fallbackImageFromMetadataUri(uri?: string) {
+  const tokenId = tokenIdFromMetadataUri(uri);
+  if (!tokenId || !solanaImageCid) return undefined;
+  return ipfsToHttp(`ipfs://${solanaImageCid}/${tokenId}.png`);
+}
+
+export function fallbackImageForMint(mint: string, uri?: string) {
+  const uriFallback = fallbackImageFromMetadataUri(uri);
+  if (uriFallback) return uriFallback;
+  if (!solanaImageCid) return undefined;
+  const bucket =
+    mint.split("").reduce((sum, char) => sum + char.charCodeAt(0), 0) %
+    Math.max(1, solanaImageFallbackCount);
+  return ipfsToHttp(`ipfs://${solanaImageCid}/${bucket + 1}.png`);
+}
+
 export async function fetchSolanaMetadata(uri?: string) {
   const httpUri = ipfsToHttp(uri);
   if (!httpUri) return undefined;
-  const response = await fetch(httpUri, { cache: "force-cache" });
-  if (!response.ok) return undefined;
-  const metadata = await response.json() as { name?: string; image?: string; attributes?: Array<{ trait_type: string; value: string | number }> };
-  return { ...metadata, image: ipfsToHttp(metadata.image) };
+  try {
+    const response = await fetch(httpUri, { cache: "force-cache" });
+    if (!response.ok) {
+      return { image: fallbackImageFromMetadataUri(uri) };
+    }
+    const metadata = await response.json() as { name?: string; image?: string; attributes?: Array<{ trait_type: string; value: string | number }> };
+    return { ...metadata, image: ipfsToHttp(metadata.image) || fallbackImageFromMetadataUri(uri) };
+  } catch {
+    return { image: fallbackImageFromMetadataUri(uri) };
+  }
 }

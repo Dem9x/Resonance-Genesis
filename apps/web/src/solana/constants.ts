@@ -8,6 +8,9 @@ export const reMintAddress = process.env.NEXT_PUBLIC_RE_MINT_ADDRESS || "";
 export const chladniCollectionMint = process.env.NEXT_PUBLIC_CHLADNI_COLLECTION_MINT || "";
 export const solanaMetadataCid = process.env.NEXT_PUBLIC_METADATA_CID || "";
 export const solanaMetadataBaseUri = process.env.NEXT_PUBLIC_SOLANA_METADATA_BASE_URI || "";
+export const solanaImageCid = process.env.NEXT_PUBLIC_SOLANA_IMAGE_CID || process.env.NEXT_PUBLIC_IMAGE_CID || "";
+export const solanaMintMetadataTokenId = Number(process.env.NEXT_PUBLIC_SOLANA_MINT_METADATA_TOKEN_ID || "1");
+export const solanaImageFallbackCount = Number(process.env.NEXT_PUBLIC_SOLANA_IMAGE_FALLBACK_COUNT || "20");
 
 export const minClaimRe = 33;
 export const reDecimals = 9;

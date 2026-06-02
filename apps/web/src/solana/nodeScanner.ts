@@ -2,7 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { PublicKey, type Connection } from "@solana/web3.js";
 import { Metadata, PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID } from "@metaplex-foundation/mpl-token-metadata";
-import { fetchSolanaMetadata } from "@/solana/metadata";
+import { fallbackImageForMint, fetchSolanaMetadata } from "@/solana/metadata";
 import { hashrateFromTraits, pendingReFromState } from "@/solana/hashrate";
 import { nodeTraitsPda, stakePda } from "@/solana/pda";
 import type { SolanaNode, SolanaNodeTraits, SolanaStakeState } from "@/solana/types";
@@ -49,7 +49,7 @@ export async function loadMetadataForMint(connection: Connection, mint: PublicKe
       metadataAddress: metadataAddress.toBase58(),
       metadataUri: uri,
       name: json?.name || clean(account.data.name),
-      image: json?.image,
+      image: json?.image || fallbackImageForMint(mint.toBase58(), uri),
     };
   } catch {
     return {

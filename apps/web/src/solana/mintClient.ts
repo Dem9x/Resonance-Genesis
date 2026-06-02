@@ -21,7 +21,7 @@ import {
   createCreateMasterEditionV3Instruction,
   createCreateMetadataAccountV3Instruction,
 } from "@metaplex-foundation/mpl-token-metadata";
-import { solanaMetadataBaseUri, solanaMetadataCid } from "@/solana/constants";
+import { solanaMetadataBaseUri, solanaMetadataCid, solanaMintMetadataTokenId } from "@/solana/constants";
 
 export type SolanaMintResult = {
   signature: string;
@@ -77,7 +77,7 @@ export async function mintSolanaChladniNode({
   const tokenAccount = getAssociatedTokenAddressSync(mint.publicKey, payer);
   const metadata = metadataPda(mint.publicKey);
   const masterEdition = masterEditionPda(mint.publicKey);
-  const tokenId = Date.now();
+  const tokenId = Number.isFinite(solanaMintMetadataTokenId) && solanaMintMetadataTokenId > 0 ? solanaMintMetadataTokenId : 1;
   const metadataUri = metadataUriFor(tokenId);
   const lamports = await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
 
