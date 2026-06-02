@@ -4,6 +4,7 @@ import { BackgroundResonance } from "@/components/BackgroundResonance";
 import { Footer } from "@/components/Footer";
 import { Header } from "@/components/Header";
 import { Providers } from "@/components/Providers";
+import { NetworkModeProvider } from "@/network/NetworkModeProvider";
 import { ThemeProvider } from "@/theme/ThemeProvider";
 
 export const metadata: Metadata = {
@@ -16,12 +17,14 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
     <html lang="en" data-theme="terminal-matrix-sand">
       <body>
         <ThemeProvider>
-          <Providers>
-            <BackgroundResonance />
-            <Header />
-            <main>{children}</main>
-            <Footer />
-          </Providers>
+          <NetworkModeProvider>
+            <Providers>
+              <BackgroundResonance />
+              <Header />
+              <main>{children}</main>
+              <Footer />
+            </Providers>
+          </NetworkModeProvider>
         </ThemeProvider>
       </body>
     </html>
