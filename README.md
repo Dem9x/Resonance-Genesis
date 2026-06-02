@@ -172,6 +172,12 @@ NEXT_PUBLIC_CHLADNI_NODE_MINER_ADDRESS=<mainnet miner>
 
 This repository now includes a parallel Solana Devnet implementation in `packages/solana`. The EVM/Foundry contracts remain intact.
 
+For the full Solana flow from WSL setup through Devnet deploy, RE mint creation, Metaplex NFT minting, staking, and claim testing, see:
+
+```text
+docs/SOLANA_DEVNET_STEP_BY_STEP.md
+```
+
 ### Setup
 
 Install Solana CLI and Anchor, then configure Devnet:
