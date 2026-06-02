@@ -1,5 +1,6 @@
 import { createMint, getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
-import { getConnection, loadCache, loadPayer, saveCache, type CachedNode } from "./lib";
+import { PublicKey } from "@solana/web3.js";
+import { createNftMetadata, getConnection, loadCache, loadPayer, metadataUriFor, saveCache, type CachedNode } from "./lib";
 
 const families = ["Diamond Mesh", "Radial Bloom", "Bridge Mesh", "Harmonic Lattice", "Aurora Plate"];
 
@@ -24,6 +25,7 @@ async function main() {
   const cache = loadCache();
   const existing = cache.sampleNodes || [];
   const sampleNodes: CachedNode[] = [...existing];
+  const collectionMint = process.env.CHLADNI_COLLECTION_MINT || cache.collectionMint;
 
   for (let i = 0; i < count; i += 1) {
     const tokenId = existing.length + i + 1;
@@ -32,15 +34,32 @@ async function main() {
     await mintTo(connection, payer, mint, ownerAta.address, payer, 1);
 
     const traits = traitFor(tokenId);
+    const uri = metadataUriFor(tokenId);
+    const metadata = await createNftMetadata({
+      connection,
+      payer,
+      mint,
+      name: `Chladni Node #${tokenId}`,
+      symbol: "NODE",
+      uri,
+      collectionMint: collectionMint ? new PublicKey(collectionMint) : undefined,
+    });
+
     sampleNodes.push({
       tokenId,
       mint: mint.toBase58(),
       ownerTokenAccount: ownerAta.address.toBase58(),
+      metadata: metadata.metadata.toBase58(),
+      masterEdition: metadata.masterEdition.toBase58(),
+      metadataUri: uri,
       ...traits,
     });
 
     console.log(`NODE_${tokenId}_MINT=${mint.toBase58()}`);
     console.log(`NODE_${tokenId}_TOKEN_ACCOUNT=${ownerAta.address.toBase58()}`);
+    console.log(`NODE_${tokenId}_METADATA=${metadata.metadata.toBase58()}`);
+    console.log(`NODE_${tokenId}_MASTER_EDITION=${metadata.masterEdition.toBase58()}`);
+    console.log(`NODE_${tokenId}_METADATA_URI=${uri}`);
   }
 
   saveCache({ sampleNodes });

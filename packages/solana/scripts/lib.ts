@@ -1,5 +1,19 @@
 import * as anchor from "@coral-xyz/anchor";
-import { Connection, Keypair, PublicKey, SystemProgram, clusterApiUrl } from "@solana/web3.js";
+import {
+  Connection,
+  Keypair,
+  PublicKey,
+  SYSVAR_RENT_PUBKEY,
+  SystemProgram,
+  Transaction,
+  clusterApiUrl,
+  sendAndConfirmTransaction,
+} from "@solana/web3.js";
+import {
+  PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID,
+  createCreateMasterEditionV3Instruction,
+  createCreateMetadataAccountV3Instruction,
+} from "@metaplex-foundation/mpl-token-metadata";
 import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
@@ -8,6 +22,9 @@ export type CachedNode = {
   tokenId: number;
   mint: string;
   ownerTokenAccount: string;
+  metadata?: string;
+  masterEdition?: string;
+  metadataUri?: string;
   frequency: number;
   modeN: number;
   modeM: number;
@@ -23,6 +40,9 @@ export type DevnetCache = {
   reMintAuthorityPda?: string;
   collectionMint?: string;
   collectionTokenAccount?: string;
+  collectionMetadata?: string;
+  collectionMasterEdition?: string;
+  collectionMetadataUri?: string;
   globalConfig?: string;
   initializedSignature?: string;
   sampleNodes?: CachedNode[];
@@ -53,6 +73,113 @@ export function loadCache(): DevnetCache {
 export function saveCache(next: DevnetCache) {
   fs.mkdirSync(path.dirname(cachePath), { recursive: true });
   fs.writeFileSync(cachePath, JSON.stringify({ ...loadCache(), ...next, programId: programId.toBase58() }, null, 2));
+}
+
+export function metadataPda(mint: PublicKey) {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("metadata"), TOKEN_METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer()],
+    TOKEN_METADATA_PROGRAM_ID,
+  );
+}
+
+export function masterEditionPda(mint: PublicKey) {
+  return PublicKey.findProgramAddressSync(
+    [Buffer.from("metadata"), TOKEN_METADATA_PROGRAM_ID.toBuffer(), mint.toBuffer(), Buffer.from("edition")],
+    TOKEN_METADATA_PROGRAM_ID,
+  );
+}
+
+export function metadataUriFor(tokenId: number) {
+  if (process.env.METADATA_URI) {
+    return process.env.METADATA_URI;
+  }
+  if (process.env.METADATA_BASE_URI) {
+    return `${process.env.METADATA_BASE_URI.replace(/\/$/, "")}/${tokenId}.json`;
+  }
+  if (process.env.METADATA_CID) {
+    return `ipfs://${process.env.METADATA_CID}/${tokenId}.json`;
+  }
+  return `https://example.com/resonance-genesis/${tokenId}.json`;
+}
+
+export function collectionMetadataUri() {
+  if (process.env.COLLECTION_METADATA_URI) {
+    return process.env.COLLECTION_METADATA_URI;
+  }
+  if (process.env.METADATA_CID) {
+    return `ipfs://${process.env.METADATA_CID}/collection.json`;
+  }
+  return "https://example.com/resonance-genesis/collection.json";
+}
+
+export async function createNftMetadata(args: {
+  connection: Connection;
+  payer: Keypair;
+  mint: PublicKey;
+  name: string;
+  symbol: string;
+  uri: string;
+  collectionMint?: PublicKey;
+}) {
+  const [metadata] = metadataPda(args.mint);
+  const [masterEdition] = masterEditionPda(args.mint);
+  const collection = args.collectionMint ? { verified: false, key: args.collectionMint } : null;
+  const transaction = new Transaction().add(
+    createCreateMetadataAccountV3Instruction(
+      {
+        metadata,
+        mint: args.mint,
+        mintAuthority: args.payer.publicKey,
+        payer: args.payer.publicKey,
+        updateAuthority: args.payer.publicKey,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY,
+      },
+      {
+        createMetadataAccountArgsV3: {
+          data: {
+            name: args.name,
+            symbol: args.symbol,
+            uri: args.uri,
+            sellerFeeBasisPoints: 0,
+            creators: [{ address: args.payer.publicKey, verified: true, share: 100 }],
+            collection,
+            uses: null,
+          },
+          isMutable: true,
+          collectionDetails: null,
+        },
+      },
+    ),
+    createCreateMasterEditionV3Instruction(
+      {
+        edition: masterEdition,
+        mint: args.mint,
+        updateAuthority: args.payer.publicKey,
+        mintAuthority: args.payer.publicKey,
+        payer: args.payer.publicKey,
+        metadata,
+        tokenProgram: anchor.utils.token.TOKEN_PROGRAM_ID,
+        systemProgram: SystemProgram.programId,
+        rent: SYSVAR_RENT_PUBKEY,
+      },
+      {
+        createMasterEditionArgs: {
+          maxSupply: new anchor.BN(0),
+        },
+      },
+    ),
+  );
+
+  const signature = await sendAndConfirmTransaction(args.connection, transaction, [args.payer], {
+    commitment: "confirmed",
+  });
+
+  return {
+    metadata,
+    masterEdition,
+    signature,
+  };
 }
 
 export function getConnection() {
@@ -99,4 +226,4 @@ export function stakePda(nftMint: PublicKey) {
 }
 
 export const systemProgram = SystemProgram.programId;
-
+export const rentSysvar = SYSVAR_RENT_PUBKEY;
