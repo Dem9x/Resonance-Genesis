@@ -1,2 +1,54 @@
-console.log("TODO: mint sample Chladni Node NFTs on Devnet using Filebase/IPFS metadata URIs.");
-console.log("Inputs planned: count, owner wallet, metadata folder URI or JSON list.");
+import { createMint, getOrCreateAssociatedTokenAccount, mintTo } from "@solana/spl-token";
+import { getConnection, loadCache, loadPayer, saveCache, type CachedNode } from "./lib";
+
+const families = ["Diamond Mesh", "Radial Bloom", "Bridge Mesh", "Harmonic Lattice", "Aurora Plate"];
+
+function traitFor(index: number) {
+  const frequency = [174, 285, 396, 417, 528, 639, 741, 852, 963, 1515][index % 10];
+  const modeN = 3 + (index % 7);
+  const modeM = 4 + ((index * 2) % 8);
+  const nodeDensityBps = 700 + index * 37;
+  const lineThicknessBps = 90 + (index % 9) * 8;
+  const rarityTier = index % 12 === 0 ? 4 : index % 7 === 0 ? 3 : index % 4 === 0 ? 2 : index % 2 === 0 ? 1 : 0;
+  const patternFamilyHash = families[index % families.length]
+    .split("")
+    .reduce((hash, char) => (hash * 31 + char.charCodeAt(0)) >>> 0, 7);
+
+  return { frequency, modeN, modeM, nodeDensityBps, lineThicknessBps, rarityTier, patternFamilyHash };
+}
+
+async function main() {
+  const connection = getConnection();
+  const payer = loadPayer();
+  const count = Number(process.env.SAMPLE_NODE_COUNT || "3");
+  const cache = loadCache();
+  const existing = cache.sampleNodes || [];
+  const sampleNodes: CachedNode[] = [...existing];
+
+  for (let i = 0; i < count; i += 1) {
+    const tokenId = existing.length + i + 1;
+    const mint = await createMint(connection, payer, payer.publicKey, null, 0);
+    const ownerAta = await getOrCreateAssociatedTokenAccount(connection, payer, mint, payer.publicKey);
+    await mintTo(connection, payer, mint, ownerAta.address, payer, 1);
+
+    const traits = traitFor(tokenId);
+    sampleNodes.push({
+      tokenId,
+      mint: mint.toBase58(),
+      ownerTokenAccount: ownerAta.address.toBase58(),
+      ...traits,
+    });
+
+    console.log(`NODE_${tokenId}_MINT=`, mint.toBase58());
+    console.log(`NODE_${tokenId}_TOKEN_ACCOUNT=`, ownerAta.address.toBase58());
+  }
+
+  saveCache({ sampleNodes });
+  console.log("SAMPLE_NODE_COUNT=", sampleNodes.length);
+}
+
+main().catch((error) => {
+  console.error(error);
+  process.exit(1);
+});
+

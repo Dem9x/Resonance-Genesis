@@ -20,6 +20,8 @@
     "solana:test": "npm run test -w @resonance/solana",
     "solana:deploy:devnet": "npm run deploy:devnet -w @resonance/solana",
     "solana:create-re-token": "npm run create-re-token -w @resonance/solana",
+    "solana:create-collection": "npm run create-collection -w @resonance/solana",
+    "solana:derive-pdas": "npm run derive-pdas -w @resonance/solana",
     "solana:initialize": "npm run initialize -w @resonance/solana",
     "solana:mint-samples": "npm run mint-samples -w @resonance/solana",
     "solana:set-traits": "npm run set-traits -w @resonance/solana"
