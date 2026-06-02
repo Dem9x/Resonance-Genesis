@@ -133,7 +133,7 @@ Important: no spaces around `=` in shell exports.
 
 ## 7. Initialize Global Config
 
-Only run this once per program deployment. It creates the `global_config` PDA.
+This creates the `global_config` PDA. The script is idempotent, so it is safe to run more than once for the same program.
 
 ```bash
 npm run initialize
@@ -146,14 +146,54 @@ GLOBAL_CONFIG=DxAtxSYTaNXxAsdYtHo7AnWfACJxrub3UbjsExaNoG7a
 INITIALIZE_SIGNATURE=...
 ```
 
-If `global_config` already exists, do not run initialize again for the same program.
+If `global_config` already exists, the script prints `Global config already initialized` and exits successfully.
 
-## 8. Mint Sample Chladni Node NFTs
+## 8. Generate V3 Scientific Source Assets
+
+V3 is the official Solana Devnet source for visual assets, metadata, and mining traits.
+
+```bash
+cd /mnt/c/Users/User/Documents/Codex/2026-05-29/you-are-a-senior-full-stack
+npm run gen:scientific:v3:test
+npm run svg:png:v3
+npm run validate:scientific:v3
+```
+
+Production flow:
+
+```bash
+npm run gen:scientific:v3
+npm run svg:png:v3
+```
+
+Upload:
+
+1. Upload `output_scientific_collection_v3/chladni-nodes/png` to Filebase and copy the image CID.
+2. Update metadata image fields with the image CID.
+3. Upload `output_scientific_collection_v3/chladni-nodes/metadata` to Filebase and copy the metadata CID.
+
+```bash
+node scripts/update-metadata-cid.mjs \
+  --metadata-dir output_scientific_collection_v3/chladni-nodes/metadata \
+  --image-cid PASTE_IMAGE_CID \
+  --image-ext png
+```
+
+Then return to the Solana package:
+
+```bash
+cd packages/solana
+export METADATA_CID=PASTE_METADATA_CID
+```
+
+## 9. Mint Scientific Chladni Node NFTs
 
 These are real Metaplex NFTs with metadata and master editions. They also remain compatible with the staking program because each mint has decimals `0` and supply `1`.
 
+The mint script reads local V3 metadata and V3 `onchain-traits.json`. It does not invent mining traits.
+
 ```bash
-export SAMPLE_NODE_COUNT=3
+export SAMPLE_NODE_COUNT=20
 npm run mint-samples
 ```
 
@@ -174,24 +214,24 @@ The scripts save deployment state in:
 packages/solana/.cache/solana-devnet.json
 ```
 
-To use scientific generator traits, generate V3 first:
-
-```bash
-npm run gen:scientific:v3:test
-```
-
-Then set traits from:
+The cache maps:
 
 ```text
-output_scientific_collection_v3/chladni-nodes/onchain-traits.json
+tokenId -> mint address
 ```
 
-## 9. Set On-Chain Mining Traits
+## 10. Set On-Chain Mining Traits
 
 Solana cannot read JSON metadata directly, so compact mining traits must be stored in NodeTraits PDAs.
 
 ```bash
 npm run set-traits
+```
+
+By default, `set-traits` reads minted token mappings from `.cache/solana-devnet.json` and traits from:
+
+```text
+output_scientific_collection_v3/chladni-nodes/onchain-traits.json
 ```
 
 Or explicitly provide scientific traits and mints:
@@ -210,7 +250,7 @@ NODE_1_SET_TRAITS_SIGNATURE=...
 TRAITS_SET_COUNT=3
 ```
 
-## 10. Stake A Node
+## 11. Stake A Node
 
 Pick a node mint from `mint-samples` output or from the cache:
 
@@ -236,7 +276,7 @@ STAKE_SIGNATURE=...
 
 The NFT is transferred into the program vault and becomes an active miner.
 
-## 11. Claim RE
+## 12. Claim RE
 
 Claims unlock at the configured minimum claim threshold, currently `33 RE`. If you claim too early, `MinimumClaimNotReached` is expected.
 
@@ -255,7 +295,7 @@ CLAIM_RE_SIGNATURE=...
 
 RE is minted to the user's associated token account by the program PDA mint authority.
 
-## 12. Frontend Env
+## 13. Frontend Env
 
 Add this to `apps/web/.env.local`:
 
@@ -280,7 +320,7 @@ cd /mnt/c/Users/User/Documents/Codex/2026-05-29/you-are-a-senior-full-stack
 npm run dev
 ```
 
-## 13. Troubleshooting
+## 14. Troubleshooting
 
 If `esbuild` says `win32-x64` is installed but Linux needs `linux-x64`, rebuild/install dependencies inside WSL:
 

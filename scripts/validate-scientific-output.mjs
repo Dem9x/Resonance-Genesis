@@ -53,6 +53,17 @@ function hasAttribute(metadata, traitType) {
   return Array.isArray(metadata.attributes) && metadata.attributes.some((item) => item?.trait_type === traitType);
 }
 
+function validateSvgDocument(filePath, errors) {
+  const svg = fs.readFileSync(filePath, "utf8");
+  const label = path.relative(process.cwd(), filePath);
+  assert(svg.includes("<svg"), `${label} missing <svg`, errors);
+  assert(svg.includes("<defs>"), `${label} missing <defs>`, errors);
+  assert(svg.includes('id="background"'), `${label} missing background rect`, errors);
+  assert(svg.includes('id="plate"'), `${label} missing plate rect`, errors);
+  assert(svg.includes("<circle"), `${label} missing Chladni dot circles`, errors);
+  assert(svg.includes('id="label"'), `${label} missing label group`, errors);
+}
+
 function main() {
   const options = parseArgs(process.argv.slice(2));
   const errors = [];
@@ -112,6 +123,7 @@ function main() {
   ];
 
   metadataFiles.forEach((fileName, index) => {
+    validateSvgDocument(path.join(imageDir, images[index]), errors);
     const metadata = readJson(path.join(metadataDir, fileName));
     const label = `metadata/${fileName}`;
     for (const key of expectedKeys) {

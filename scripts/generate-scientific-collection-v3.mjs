@@ -42,7 +42,7 @@ function parseArgs(argv) {
   return args;
 }
 
-function printHelp() { console.log(`Generate scientific Chladni Node NFT collection v3.\nnode scripts/generate-scientific-collection-v2.mjs --count 1000`); }
+function printHelp() { console.log(`Generate scientific Chladni Node NFT collection v3.\nnode scripts/generate-scientific-collection-v3.mjs --count 1000`); }
 function normalizeBaseUri(value) { if (!value) return ""; const trimmed = String(value).trim().replace(/\/$/, ""); return /^(ipfs|https?):\/\//.test(trimmed) ? trimmed : `ipfs://${trimmed}`; }
 function ensureOutput(outDir) { fs.rmSync(outDir, { recursive: true, force: true }); fs.mkdirSync(path.join(outDir, "images"), { recursive: true }); fs.mkdirSync(path.join(outDir, "metadata"), { recursive: true }); fs.mkdirSync(path.join(outDir, "traits"), { recursive: true }); }
 function buildAssetUri(base, tokenId, ext) { return base ? `${base}/${tokenId}.${ext}` : ""; }
@@ -82,7 +82,7 @@ function main() {
   for (let i = 0; i < options.count; i += 1) {
     const tokenId = options.start + i; const seed = hashStringToSeed(`${options.seed}:${tokenId}`); const mode = createRandomScientificMode(seed, tokenId); const previewRarityTier = scientificRarityTier(seed, mode); const palette = pickScientificPaletteByRarity(previewRarityTier);
     const imageUri = buildAssetUri(options.imageBase, tokenId, options.imageExt); const animationUri = options.includeAnimationUrl && options.animationBase ? buildAssetUri(options.animationBase, tokenId, options.animationExt) : "";
-    const svg = renderScientificChladniSvg({ mode, seed, width: options.width, height: options.height, showLabel: true, resolution: options.resolution, label: `CHLADNI NODE · ${mode.frequency} Hz`, palette });
+    const svg = renderScientificChladniSvg({ mode, seed, width: options.width, height: options.height, showLabel: true, resolution: options.resolution, label: `CHLADNI NODE - ${mode.frequency} Hz`, palette });
     fs.writeFileSync(path.join(imageDir, `${tokenId}.svg`), svg, "utf8");
     const { metadata, onchainTrait, summaryTraits } = makeMetadata({ tokenId, mode, seed, imageUri, animationUri, palette });
     writeJson(path.join(metadataDir, `${tokenId}.json`), metadata);

@@ -81,7 +81,7 @@ function main() {
   for (let i = 0; i < options.count; i += 1) {
     const tokenId = options.start + i; const seed = hashStringToSeed(`${options.seed}:${tokenId}`); const mode = createRandomScientificMode(seed, tokenId);
     const imageUri = buildAssetUri(options.imageBase, tokenId, options.imageExt); const animationUri = options.includeAnimationUrl && options.animationBase ? buildAssetUri(options.animationBase, tokenId, options.animationExt) : "";
-    const svg = renderScientificChladniSvg({ mode, seed, width: options.width, height: options.height, showLabel: true, resolution: options.resolution, label: `CHLADNI NODE · ${mode.frequency} Hz` });
+    const svg = renderScientificChladniSvg({ mode, seed, width: options.width, height: options.height, showLabel: true, resolution: options.resolution, label: `CHLADNI NODE - ${mode.frequency} Hz` });
     fs.writeFileSync(path.join(imageDir, `${tokenId}.svg`), svg, "utf8");
     const { metadata, onchainTrait, summaryTraits } = makeMetadata({ tokenId, mode, seed, imageUri, animationUri });
     writeJson(path.join(metadataDir, `${tokenId}.json`), metadata);

@@ -78,6 +78,14 @@ function traitInputFromScientific(mint: string, tokenId: number, payload: Requir
   return node;
 }
 
+function maybeTraitInputFromScientific(mint: string, tokenId: number, payload: Required<ScientificTraitPayload>) {
+  if (!payload.tokenIds.includes(tokenId)) {
+    console.log(`SKIP_TOKEN_${tokenId}=missing from onchain traits file`);
+    return undefined;
+  }
+  return traitInputFromScientific(mint, tokenId, payload);
+}
+
 function loadScientificTraits(): TraitInput[] | undefined {
   const requestedPath = process.env.ONCHAIN_TRAITS_PATH;
   const traitsPath = requestedPath || DEFAULT_ONCHAIN_TRAITS_PATH;
@@ -105,15 +113,21 @@ function loadScientificTraits(): TraitInput[] | undefined {
     }
 
     console.log(`Using ${cacheNodes.length} cached Devnet mint(s) with scientific V3 traits from ${resolved}`);
-    return cacheNodes.map((node) => traitInputFromScientific(node.mint, node.tokenId, scientificPayload));
+    const mapped = cacheNodes
+      .map((node) => maybeTraitInputFromScientific(node.mint, node.tokenId, scientificPayload))
+      .filter((node): node is TraitInput => Boolean(node));
+    const skipped = cacheNodes.length - mapped.length;
+    if (skipped > 0) console.log(`SKIPPED_TOKEN_MAPPINGS=${skipped}`);
+    return mapped;
   }
-  if (mints.length !== payload.traits.length && mints.length !== 1) {
-    throw new Error(`NFT_MINTS count ${mints.length} must equal traits count ${payload.traits.length}, or use one NFT_MINT for one trait.`);
+  if (mints.length > payload.traits.length) {
+    throw new Error(`NFT_MINTS count ${mints.length} exceeds traits count ${payload.traits.length}.`);
   }
 
   const singleTokenId = Number(process.env.TRAIT_TOKEN_ID || payload.tokenIds[0]);
   return mints.map((mint, index) => {
     const tokenId = mints.length === 1 ? singleTokenId : payload.tokenIds![index];
+    console.log(`MAP_TOKEN_${tokenId}_MINT=${mint}`);
     return traitInputFromScientific(mint, tokenId, scientificPayload);
   });
 }

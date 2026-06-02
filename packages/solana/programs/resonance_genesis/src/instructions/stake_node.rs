@@ -48,6 +48,10 @@ pub struct StakeNode<'info> {
 pub fn handler(ctx: Context<StakeNode>) -> Result<()> {
     require!(ctx.accounts.node_traits.initialized, ResonanceError::NodeTraitsNotInitialized);
     require!(!ctx.accounts.stake_account.active, ResonanceError::AlreadyStaked);
+    // Devnet MVP gates staking through authority-written NodeTraits PDAs.
+    // Production should also pass and verify the Metaplex metadata account here,
+    // ensuring metadata.collection.key == global_config.collection_mint and that
+    // the collection is verified before the NFT can enter the miner vault.
 
     token::transfer(
         CpiContext::new(

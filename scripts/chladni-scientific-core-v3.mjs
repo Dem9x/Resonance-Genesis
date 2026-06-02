@@ -6,7 +6,22 @@ export const SCI_MIN_FREQUENCY = 20;
 export const SCI_MAX_FREQUENCY = 999;
 export const scientificRarityNames = ["Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic"];
 
-export function clamp(value, min, max) { return Math.max(min, Math.min(max, value)); }
+export const scientificRarityPalettes = {
+  0: { id: "common-natural-sand", name: "Natural Sand", background: "#050505", plateFill: "#0b0907", plateGlow: "#18120b", linePrimary: "#d8c7a3", lineSecondary: "#efe1c2", textPrimary: "#d8c7a3", textSecondary: "#b8ad98", stroke: "#5f5340", glowStrength: 1.4 },
+  1: { id: "uncommon-warm-sand", name: "Warm Sand", background: "#050505", plateFill: "#0e0905", plateGlow: "#221508", linePrimary: "#e6bd73", lineSecondary: "#ffe0a3", textPrimary: "#e6bd73", textSecondary: "#f0dbc0", stroke: "#8a6730", glowStrength: 2.1 },
+  2: { id: "rare-cyan-flux", name: "Cyan Flux", background: "#03070a", plateFill: "#071118", plateGlow: "#0d2330", linePrimary: "#86e8ff", lineSecondary: "#c7f7ff", textPrimary: "#86e8ff", textSecondary: "#ddfbff", stroke: "#2f7187", glowStrength: 2.8 },
+  3: { id: "epic-violet-resonance", name: "Violet Resonance", background: "#07050b", plateFill: "#110a1a", plateGlow: "#28103a", linePrimary: "#d9a8ff", lineSecondary: "#f0daff", textPrimary: "#d9a8ff", textSecondary: "#f7edff", stroke: "#74429d", glowStrength: 3.1 },
+  4: { id: "legendary-gold-signal", name: "Gold Signal", background: "#050403", plateFill: "#100b04", plateGlow: "#3a2207", linePrimary: "#ffd36a", lineSecondary: "#fff0b8", textPrimary: "#ffd36a", textSecondary: "#fff2c9", stroke: "#b48122", glowStrength: 3.6 },
+  5: { id: "mythic-prism-core", name: "Prism Core", background: "#050309", plateFill: "#100819", plateGlow: "#35145a", linePrimary: "#ffb7f7", lineSecondary: "#ffffff", textPrimary: "#ffb7f7", textSecondary: "#f5e8ff", stroke: "#c084fc", glowStrength: 4.2 },
+};
+
+export function pickScientificPaletteByRarity(rarityTier = 0) {
+  return scientificRarityPalettes[rarityTier] || scientificRarityPalettes[0];
+}
+
+export function clamp(value, min, max) {
+  return Math.max(min, Math.min(max, value));
+}
 
 export function hashStringToSeed(input = "") {
   let h = 2166136261 >>> 0;
@@ -33,26 +48,12 @@ export function writeJson(filePath, value) {
   fs.writeFileSync(filePath, `${JSON.stringify(value, null, 2)}\n`, "utf8");
 }
 
-function svgEscape(value) {
+export function svgEscape(value) {
   return String(value)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
     .replaceAll(">", "&gt;")
     .replaceAll('"', "&quot;");
-}
-
-
-export const scientificRarityPalettes = {
-  0: { id: "common-natural-sand", name: "Natural Sand", background: "#050505", plateFill: "#0b0907", plateGlow: "#18120b", linePrimary: "#d8c7a3", lineSecondary: "#efe1c2", textPrimary: "#d8c7a3", textSecondary: "#b8ad98", stroke: "#5f5340", glowStrength: 1.4 },
-  1: { id: "uncommon-warm-sand", name: "Warm Sand", background: "#050505", plateFill: "#0e0905", plateGlow: "#221508", linePrimary: "#e6bd73", lineSecondary: "#ffe0a3", textPrimary: "#e6bd73", textSecondary: "#f0dbc0", stroke: "#8a6730", glowStrength: 2.1 },
-  2: { id: "rare-cyan-flux", name: "Cyan Flux", background: "#03070a", plateFill: "#071118", plateGlow: "#0d2330", linePrimary: "#86e8ff", lineSecondary: "#c7f7ff", textPrimary: "#86e8ff", textSecondary: "#ddfbff", stroke: "#2f7187", glowStrength: 2.8 },
-  3: { id: "epic-violet-resonance", name: "Violet Resonance", background: "#07050b", plateFill: "#110a1a", plateGlow: "#28103a", linePrimary: "#d9a8ff", lineSecondary: "#f0daff", textPrimary: "#d9a8ff", textSecondary: "#f7edff", stroke: "#74429d", glowStrength: 3.1 },
-  4: { id: "legendary-gold-signal", name: "Gold Signal", background: "#050403", plateFill: "#100b04", plateGlow: "#3a2207", linePrimary: "#ffd36a", lineSecondary: "#fff0b8", textPrimary: "#ffd36a", textSecondary: "#fff2c9", stroke: "#b48122", glowStrength: 3.6 },
-  5: { id: "mythic-prism-core", name: "Prism Core", background: "#050309", plateFill: "#100819", plateGlow: "#35145a", linePrimary: "#ffb7f7", lineSecondary: "#ffffff", textPrimary: "#ffb7f7", textSecondary: "#f5e8ff", stroke: "#c084fc", glowStrength: 4.2 },
-};
-
-export function pickScientificPaletteByRarity(rarityTier = 0) {
-  return scientificRarityPalettes[rarityTier] || scientificRarityPalettes[0];
 }
 
 export function normalizeChladniModePair(n, m) {
@@ -83,17 +84,8 @@ export function familyFromScientificPair(n, m) {
 export function patternNameFromScientificPair(n, m, family) {
   const diff = Math.abs(n - m);
   const complexity = n * m;
-  let prefix = "Resonant";
-  if (complexity < 20) prefix = "Fundamental";
-  else if (complexity < 50) prefix = "Central";
-  else if (complexity < 90) prefix = "Structured";
-  else if (complexity < 140) prefix = "Harmonic";
-  else prefix = "Dense";
-  let structure = "Field";
-  if (diff === 1) structure = "Mirror";
-  else if (diff === 2) structure = "Bridge";
-  else if (diff <= 4) structure = "Lattice";
-  else structure = "Drift";
+  const prefix = complexity < 20 ? "Fundamental" : complexity < 50 ? "Central" : complexity < 90 ? "Structured" : complexity < 140 ? "Harmonic" : "Dense";
+  const structure = diff === 1 ? "Mirror" : diff === 2 ? "Bridge" : diff <= 4 ? "Lattice" : "Drift";
   return `${prefix} ${structure} ${family}`;
 }
 
@@ -103,14 +95,11 @@ export function generateScientificModeCatalog(count = 140) {
     for (let m = n + 1; m <= 22; m += 1) {
       const diff = Math.abs(n - m);
       const complexity = n * m;
-      if (diff > 7) continue;
-      if (complexity < 6) continue;
-      if (complexity > 260) continue;
+      if (diff > 7 || complexity < 6 || complexity > 260) continue;
       const safe = normalizeChladniModePair(n, m);
       const k = Number(Math.sqrt(safe.n * safe.n + safe.m * safe.m).toFixed(3));
       const family = familyFromScientificPair(safe.n, safe.m);
-      const patternName = patternNameFromScientificPair(safe.n, safe.m, family);
-      modes.push({ id: `k-${String(safe.n).padStart(2, "0")}-${String(safe.m).padStart(2, "0")}`, k, n: safe.n, m: safe.m, family, patternName });
+      modes.push({ id: `k-${String(safe.n).padStart(2, "0")}-${String(safe.m).padStart(2, "0")}`, k, n: safe.n, m: safe.m, family, patternName: patternNameFromScientificPair(safe.n, safe.m, family) });
     }
   }
   return modes.sort((a, b) => a.k - b.k || a.n - b.n || a.m - b.m).slice(0, count);
@@ -124,12 +113,10 @@ export function scientificModeFromFrequency(frequency, seed = 0) {
   const index = clamp(Math.round(t * (scientificChladniModes.length - 1)), 0, scientificChladniModes.length - 1);
   const base = scientificChladniModes[index];
   const safePair = normalizeChladniModePair(base.n, base.m);
-  const detuneA = ((f % 37) / 37) * 0.18;
-  const detuneB = ((seed % 17) / 17) * 0.04;
   return {
     id: `scientific-${f}-${base.id}`,
     frequency: f,
-    waveNumberK: Number((base.k + detuneA + detuneB).toFixed(3)),
+    waveNumberK: Number((base.k + ((f % 37) / 37) * 0.18 + ((seed % 17) / 17) * 0.04).toFixed(3)),
     n: safePair.n,
     m: safePair.m,
     family: base.family,
@@ -141,8 +128,7 @@ export function scientificModeFromFrequency(frequency, seed = 0) {
 
 export function createRandomScientificMode(seed, index = 0) {
   const rng = mulberry32((seed + index * 2654435761) >>> 0);
-  const frequency = Math.round(SCI_MIN_FREQUENCY + rng() * (SCI_MAX_FREQUENCY - SCI_MIN_FREQUENCY));
-  return scientificModeFromFrequency(frequency, seed);
+  return scientificModeFromFrequency(Math.round(SCI_MIN_FREQUENCY + rng() * (SCI_MAX_FREQUENCY - SCI_MIN_FREQUENCY)), seed);
 }
 
 export function pureChladniField(x, y, n, m) {
@@ -181,27 +167,28 @@ export function renderScientificChladniSvg({
     for (let ix = 0; ix < resolution; ix += 1) {
       const nx = ix / (resolution - 1);
       const ny = iy / (resolution - 1);
-      const field = pureChladniField(nx * 2 - 1, ny * 2 - 1, mode.n, mode.m);
-      const intensity = scientificLineIntensity(field, epsilon);
+      const intensity = scientificLineIntensity(pureChladniField(nx * 2 - 1, ny * 2 - 1, mode.n, mode.m), epsilon);
       if (intensity <= 0) continue;
       const px = margin + ix * cell;
       const py = margin + iy * cell;
       const r = lineWidth + intensity * 1.55;
-      const opacity = clamp(0.10 + intensity * 0.95, 0.05, 1);
-      dots.push(`<circle cx="${px.toFixed(2)}" cy="${py.toFixed(2)}" r="${r.toFixed(2)}" fill="${intensity > 0.66 ? activePalette.lineSecondary : activePalette.linePrimary}" opacity="${opacity.toFixed(3)}"/>`);
+      const opacity = clamp(0.1 + intensity * 0.95, 0.05, 1);
+      const fill = intensity > 0.66 ? activePalette.lineSecondary : activePalette.linePrimary;
+      dots.push(`<circle cx="${px.toFixed(2)}" cy="${py.toFixed(2)}" r="${r.toFixed(2)}" fill="${fill}" opacity="${opacity.toFixed(3)}"/>`);
     }
   }
+  if (dots.length === 0) throw new Error(`No Chladni dots rendered for ${mode.n}x${mode.m}`);
 
-  const title = label || `CHLADNI NODE · ${mode.frequency} Hz`;
+  const title = label || `CHLADNI NODE - ${mode.frequency} Hz`;
   const labelMarkup = showLabel ? `
-  <g opacity="0.98">
+  <g id="label" opacity="0.98">
     <rect x="${margin}" y="${height - margin * 0.96}" width="${plate}" height="70" rx="14" fill="${activePalette.plateFill}" opacity="0.90" stroke="${activePalette.stroke}" stroke-opacity="0.40"/>
     <text x="${width / 2}" y="${height - margin * 0.62}" fill="${activePalette.textPrimary}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="18" font-weight="900" letter-spacing="2" text-anchor="middle">${svgEscape(title)}</text>
-    <text x="${width / 2}" y="${height - margin * 0.36}" fill="${activePalette.textSecondary}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="700" letter-spacing="1.2" text-anchor="middle">K=${mode.waveNumberK} · Mode ${mode.n}×${mode.m} · ${svgEscape(mode.family)} · ${svgEscape(activePalette.name)}</text>
+    <text x="${width / 2}" y="${height - margin * 0.36}" fill="${activePalette.textSecondary}" font-family="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace" font-size="12" font-weight="700" letter-spacing="1.2" text-anchor="middle">K=${mode.waveNumberK} - Mode ${mode.n}x${mode.m} - ${svgEscape(mode.family)} - ${svgEscape(activePalette.name)}</text>
   </g>` : "";
 
   return `<?xml version="1.0" encoding="UTF-8"?>
-<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}">
+<svg xmlns="http://www.w3.org/2000/svg" width="${width}" height="${height}" viewBox="0 0 ${width} ${height}" role="img" aria-label="${svgEscape(title)}">
   <defs>
     <radialGradient id="bg" cx="50%" cy="44%" r="72%">
       <stop offset="0%" stop-color="${activePalette.plateGlow}"/>
@@ -213,9 +200,9 @@ export function renderScientificChladniSvg({
       <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
     </filter>
   </defs>
-  <rect width="100%" height="100%" fill="${activePalette.background}"/>
-  <rect x="${margin}" y="${margin}" width="${plate}" height="${plate}" fill="url(#bg)" stroke="${activePalette.stroke}" stroke-opacity="0.55" stroke-width="2"/>
-  <g filter="url(#lineGlow)">
+  <rect id="background" width="100%" height="100%" fill="${activePalette.background}"/>
+  <rect id="plate" x="${margin}" y="${margin}" width="${plate}" height="${plate}" fill="url(#bg)" stroke="${activePalette.stroke}" stroke-opacity="0.55" stroke-width="2"/>
+  <g id="chladni-dots" filter="url(#lineGlow)">
     ${dots.join("\n")}
   </g>
   ${labelMarkup}
@@ -223,8 +210,7 @@ export function renderScientificChladniSvg({
 }
 
 export function computeScientificNodeDensityBps(mode) {
-  const complexity = mode.n * mode.m;
-  return Math.round(clamp(300 + complexity * 22 + mode.waveNumberK * 18, 300, 2800));
+  return Math.round(clamp(300 + mode.n * mode.m * 22 + mode.waveNumberK * 18, 300, 2800));
 }
 
 export function computeScientificLineThicknessBps(mode) {
