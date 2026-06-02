@@ -4,7 +4,7 @@ pub mod errors;
 pub mod instructions;
 pub mod state;
 
-use instructions::*;
+pub use instructions::{ClaimRe, Initialize, InitializeArgs, SetNodeTraits, SetNodeTraitsArgs, StakeNode, UnstakeNode, UpdateConfig, UpdateConfigArgs};
 
 declare_id!("bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7");
 
