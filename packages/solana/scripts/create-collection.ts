@@ -4,7 +4,7 @@ import { collectionMetadataUri, createNftMetadata, getConnection, loadPayer, sav
 async function main() {
   const connection = getConnection();
   const payer = loadPayer();
-  const collectionMint = await createMint(connection, payer, payer.publicKey, null, 0);
+  const collectionMint = await createMint(connection, payer, payer.publicKey, payer.publicKey, 0);
   const collectionAta = await getOrCreateAssociatedTokenAccount(connection, payer, collectionMint, payer.publicKey);
 
   await mintTo(connection, payer, collectionMint, collectionAta.address, payer, 1);

@@ -29,7 +29,7 @@ async function main() {
 
   for (let i = 0; i < count; i += 1) {
     const tokenId = existing.length + i + 1;
-    const mint = await createMint(connection, payer, payer.publicKey, null, 0);
+    const mint = await createMint(connection, payer, payer.publicKey, payer.publicKey, 0);
     const ownerAta = await getOrCreateAssociatedTokenAccount(connection, payer, mint, payer.publicKey);
     await mintTo(connection, payer, mint, ownerAta.address, payer, 1);
 
