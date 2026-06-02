@@ -1,13 +1,28 @@
+"use client";
+
+import { useMemo, useState } from "react";
 import type { SolanaNode } from "@/solana/types";
 
 export function SolanaNodeCard({ node }: { node: SolanaNode }) {
   const rarityNames = ["Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic"];
+  const imageCandidates = useMemo(
+    () => [...new Set([node.image, ...(node.imageFallbacks || [])].filter(Boolean) as string[])],
+    [node.image, node.imageFallbacks],
+  );
+  const [imageIndex, setImageIndex] = useState(0);
+  const image = imageCandidates[imageIndex];
+
   return (
     <article className="glass-panel overflow-hidden rounded-[1.5rem]">
       <div className="aspect-square bg-gradient-to-br from-[var(--bg-soft)] via-[var(--accent)]/20 to-[var(--accent-2)]/20">
-        {node.image ? (
+        {image ? (
           // eslint-disable-next-line @next/next/no-img-element
-          <img src={node.image} alt={node.name || node.mint} className="h-full w-full object-cover" />
+          <img
+            src={image}
+            alt={node.name || node.mint}
+            className="h-full w-full object-cover"
+            onError={() => setImageIndex((current) => (current + 1 < imageCandidates.length ? current + 1 : current))}
+          />
         ) : (
           <div className="relative h-full w-full">
             <div className="absolute inset-0 sand-field opacity-40" />
@@ -18,7 +33,10 @@ export function SolanaNodeCard({ node }: { node: SolanaNode }) {
       <div className="p-4">
         <p className="font-display text-xs font-black uppercase tracking-[0.22em] text-[var(--accent)]">Solana Chladni Node</p>
         <h3 className="mt-2 truncate text-lg font-black text-[var(--text)]">{node.name || `${node.mint.slice(0, 6)}...${node.mint.slice(-4)}`}</h3>
-        <p className="mt-2 text-sm text-[var(--muted)]">{node.stake?.active ? "Staked / Mining" : "Owned / Idle"}</p>
+        <p className="mt-2 text-sm text-[var(--muted)]">
+          {node.stake?.active ? "Staked / Mining" : "Owned / Idle"}
+          {node.traitsSource === "metadata" ? " · metadata traits" : ""}
+        </p>
         <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
           <Metric label="Frequency" value={node.traits?.frequency ? `${node.traits.frequency} Hz` : "Unset"} />
           <Metric label="Mode" value={node.traits ? `${node.traits.modeN}x${node.traits.modeM}` : "Unset"} />

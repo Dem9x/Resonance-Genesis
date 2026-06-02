@@ -22,8 +22,10 @@ export type SolanaNode = {
   mint: string;
   name?: string;
   image?: string;
+  imageFallbacks?: string[];
   metadataUri?: string;
   traits?: SolanaNodeTraits;
+  traitsSource?: "onchain" | "metadata";
   stake?: SolanaStakeState;
   claimableRe?: number;
   hashrate?: number;

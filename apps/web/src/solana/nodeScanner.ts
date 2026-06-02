@@ -2,7 +2,7 @@ import * as anchor from "@coral-xyz/anchor";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { PublicKey, type Connection } from "@solana/web3.js";
 import { Metadata, PROGRAM_ID as TOKEN_METADATA_PROGRAM_ID } from "@metaplex-foundation/mpl-token-metadata";
-import { fallbackImageForMint, fetchSolanaMetadata } from "@/solana/metadata";
+import { fallbackImageForMint, fallbackImagesForMint, fetchSolanaMetadata } from "@/solana/metadata";
 import { hashrateFromTraits, pendingReFromState } from "@/solana/hashrate";
 import { nodeTraitsPda, stakePda } from "@/solana/pda";
 import type { SolanaNode, SolanaNodeTraits, SolanaStakeState } from "@/solana/types";
@@ -39,6 +39,61 @@ function clean(value?: string) {
   return value?.replace(/\u0000/g, "").trim();
 }
 
+function attributeValue(
+  attributes: Array<{ trait_type: string; value: string | number }> | undefined,
+  traitType: string,
+) {
+  return attributes?.find((item) => item.trait_type === traitType)?.value;
+}
+
+function numericAttribute(
+  attributes: Array<{ trait_type: string; value: string | number }> | undefined,
+  traitType: string,
+) {
+  const value = attributeValue(attributes, traitType);
+  if (typeof value === "number") return value;
+  const parsed = Number.parseFloat(String(value || "").replace(/[^\d.-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : 0;
+}
+
+function rarityIndexFromMetadata(
+  attributes: Array<{ trait_type: string; value: string | number }> | undefined,
+) {
+  const byIndex = numericAttribute(attributes, "Rarity Index");
+  if (byIndex > 0) return byIndex;
+  const name = String(attributeValue(attributes, "Rarity Tier") || "Common");
+  return ["Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic"].indexOf(name);
+}
+
+function traitsFromMetadata(
+  mint: PublicKey,
+  json: Awaited<ReturnType<typeof fetchSolanaMetadata>>,
+): SolanaNodeTraits | undefined {
+  const attributes = json?.attributes;
+  const frequency = numericAttribute(attributes, "Frequency");
+  const modeN = numericAttribute(attributes, "Mode N");
+  const modeM = numericAttribute(attributes, "Mode M");
+  const nodeDensityBps =
+    numericAttribute(attributes, "Node Density BPS") ||
+    Math.round(numericAttribute(attributes, "Node Density") * 10_000);
+  const lineThicknessBps =
+    numericAttribute(attributes, "Line Thickness BPS") ||
+    Math.round(numericAttribute(attributes, "Line Thickness") * 100);
+  const rarityTier = Math.max(0, rarityIndexFromMetadata(attributes));
+
+  if (!frequency || !modeN || !modeM || !nodeDensityBps || !lineThicknessBps) return undefined;
+  return {
+    nftMint: mint.toBase58(),
+    frequency,
+    modeN,
+    modeM,
+    nodeDensityBps,
+    lineThicknessBps,
+    rarityTier,
+    initialized: false,
+  };
+}
+
 export async function loadMetadataForMint(connection: Connection, mint: PublicKey) {
   const metadataAddress = metadataPda(mint);
   try {
@@ -50,11 +105,16 @@ export async function loadMetadataForMint(connection: Connection, mint: PublicKe
       metadataUri: uri,
       name: json?.name || clean(account.data.name),
       image: json?.image || fallbackImageForMint(mint.toBase58(), uri),
+      imageFallbacks: fallbackImagesForMint(mint.toBase58(), uri),
+      metadataTraits: traitsFromMetadata(mint, json),
+      metadataHashrate: json?.hashratePreview,
     };
   } catch {
     return {
       metadataAddress: metadataAddress.toBase58(),
       name: `Chladni Node ${mint.toBase58().slice(0, 6)}`,
+      image: fallbackImageForMint(mint.toBase58()),
+      imageFallbacks: fallbackImagesForMint(mint.toBase58()),
     };
   }
 }
@@ -150,14 +210,16 @@ export async function scanSolanaNodes({
         entry.stake ? Promise.resolve(entry.stake) : loadStake(program, entry.mint),
       ]);
       const activeStake = stake?.active ? stake : undefined;
+      const displayTraits = traits || metadata.metadataTraits;
       return {
         mint: entry.mint.toBase58(),
         tokenAccount: entry.tokenAccount,
         ...metadata,
-        traits,
+        traits: displayTraits,
+        traitsSource: traits ? "onchain" : metadata.metadataTraits ? "metadata" : undefined,
         stake: activeStake,
         status: activeStake ? "Staked" : entry.tokenAccount ? "Owned" : "Unknown",
-        hashrate: hashrateFromTraits(traits),
+        hashrate: hashrateFromTraits(traits) || metadata.metadataHashrate || 0,
         claimableRe: pendingReFromState(traits, activeStake),
       };
     }),
