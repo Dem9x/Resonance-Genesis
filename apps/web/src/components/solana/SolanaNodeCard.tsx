@@ -1,6 +1,7 @@
 import type { SolanaNode } from "@/solana/types";
 
 export function SolanaNodeCard({ node }: { node: SolanaNode }) {
+  const rarityNames = ["Common", "Uncommon", "Rare", "Epic", "Legendary", "Mythic"];
   return (
     <article className="glass-panel overflow-hidden rounded-[1.5rem]">
       <div className="aspect-square bg-gradient-to-br from-[var(--bg-soft)] via-[var(--accent)]/20 to-[var(--accent-2)]/20">
@@ -18,7 +19,22 @@ export function SolanaNodeCard({ node }: { node: SolanaNode }) {
         <p className="font-display text-xs font-black uppercase tracking-[0.22em] text-[var(--accent)]">Solana Chladni Node</p>
         <h3 className="mt-2 truncate text-lg font-black text-[var(--text)]">{node.name || `${node.mint.slice(0, 6)}...${node.mint.slice(-4)}`}</h3>
         <p className="mt-2 text-sm text-[var(--muted)]">{node.stake?.active ? "Staked / Mining" : "Owned / Idle"}</p>
+        <div className="mt-4 grid grid-cols-2 gap-2 text-xs">
+          <Metric label="Frequency" value={node.traits?.frequency ? `${node.traits.frequency} Hz` : "Unset"} />
+          <Metric label="Mode" value={node.traits ? `${node.traits.modeN}x${node.traits.modeM}` : "Unset"} />
+          <Metric label="Rarity" value={node.traits ? rarityNames[node.traits.rarityTier] || "Common" : "Unset"} />
+          <Metric label="Hashrate" value={node.hashrate ? `${node.hashrate} H/s` : "0 H/s"} />
+        </div>
       </div>
     </article>
+  );
+}
+
+function Metric({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-xl border border-[var(--panel-border)] bg-[var(--bg)]/50 p-2">
+      <p className="uppercase tracking-[0.14em] text-[var(--muted)]">{label}</p>
+      <p className="mt-1 font-bold text-[var(--text)]">{value}</p>
+    </div>
   );
 }

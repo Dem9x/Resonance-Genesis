@@ -27,4 +27,7 @@ export type SolanaNode = {
   stake?: SolanaStakeState;
   claimableRe?: number;
   hashrate?: number;
+  tokenAccount?: string;
+  metadataAddress?: string;
+  status?: "Owned" | "Staked" | "Unknown";
 };
