@@ -21,7 +21,7 @@ import {
   createCreateMasterEditionV3Instruction,
   createCreateMetadataAccountV3Instruction,
 } from "@metaplex-foundation/mpl-token-metadata";
-import { solanaMetadataBaseUri, solanaMetadataCid, solanaMintMetadataTokenId } from "@/solana/constants";
+import { optionalPublicKey, solanaCreatorAddress, solanaMetadataBaseUri, solanaMetadataCid, solanaMintMetadataTokenId } from "@/solana/constants";
 
 export type SolanaMintResult = {
   signature: string;
@@ -80,6 +80,8 @@ export async function mintSolanaChladniNode({
   const tokenId = Number.isFinite(solanaMintMetadataTokenId) && solanaMintMetadataTokenId > 0 ? solanaMintMetadataTokenId : 1;
   const metadataUri = metadataUriFor(tokenId);
   const lamports = await connection.getMinimumBalanceForRentExemption(MINT_SIZE);
+  const creator = optionalPublicKey(solanaCreatorAddress) || payer;
+  const creatorVerified = creator.equals(payer);
 
   const transaction = new Transaction().add(
     SystemProgram.createAccount({
@@ -109,7 +111,7 @@ export async function mintSolanaChladniNode({
             symbol: "NODE",
             uri: metadataUri,
             sellerFeeBasisPoints: 0,
-            creators: [{ address: payer, verified: true, share: 100 }],
+            creators: [{ address: creator, verified: creatorVerified, share: 100 }],
             collection: collectionMint ? { verified: false, key: collectionMint } : null,
             uses: null,
           },

@@ -6,6 +6,7 @@ export const solanaExplorerCluster = process.env.NEXT_PUBLIC_SOLANA_EXPLORER_CLU
 export const resonanceProgramId = process.env.NEXT_PUBLIC_RESONANCE_SOLANA_PROGRAM_ID || "";
 export const reMintAddress = process.env.NEXT_PUBLIC_RE_MINT_ADDRESS || "";
 export const chladniCollectionMint = process.env.NEXT_PUBLIC_CHLADNI_COLLECTION_MINT || "";
+export const solanaCreatorAddress = process.env.NEXT_PUBLIC_SOLANA_CREATOR_ADDRESS || "2ryR7rmGYP2pcjv6WWLTG3Ats3RpfKshkZ5EJTMeMCzC";
 export const solanaMetadataCid = process.env.NEXT_PUBLIC_METADATA_CID || "";
 export const solanaMetadataBaseUri = process.env.NEXT_PUBLIC_SOLANA_METADATA_BASE_URI || "";
 export const solanaImageCid = process.env.NEXT_PUBLIC_SOLANA_IMAGE_CID || process.env.NEXT_PUBLIC_IMAGE_CID || "";

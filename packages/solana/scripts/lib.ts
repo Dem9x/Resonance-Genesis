@@ -58,6 +58,9 @@ export const programId = new PublicKey(
 
 export const rpcUrl = process.env.SOLANA_RPC_URL || clusterApiUrl("devnet");
 export const keypairPath = process.env.SOLANA_KEYPAIR || `${os.homedir()}/.config/solana/id.json`;
+export const defaultCreatorAddress = "2ryR7rmGYP2pcjv6WWLTG3Ats3RpfKshkZ5EJTMeMCzC";
+export const configuredCreatorAddress = process.env.SOLANA_CREATOR_ADDRESS || process.env.METAPLEX_CREATOR_ADDRESS || defaultCreatorAddress;
+export const configuredUpdateAuthorityAddress = process.env.SOLANA_UPDATE_AUTHORITY_ADDRESS || "";
 
 export function loadPayer() {
   return Keypair.fromSecretKey(Uint8Array.from(JSON.parse(fs.readFileSync(keypairPath, "utf8"))));
@@ -120,10 +123,16 @@ export async function createNftMetadata(args: {
   symbol: string;
   uri: string;
   collectionMint?: PublicKey;
+  creatorAddress?: PublicKey;
+  updateAuthority?: PublicKey;
 }) {
   const [metadata] = metadataPda(args.mint);
   const [masterEdition] = masterEditionPda(args.mint);
   const collection = args.collectionMint ? { verified: false, key: args.collectionMint } : null;
+  const creatorAddress = args.creatorAddress || (configuredCreatorAddress ? new PublicKey(configuredCreatorAddress) : args.payer.publicKey);
+  const requestedUpdateAuthority = args.updateAuthority || (configuredUpdateAuthorityAddress ? new PublicKey(configuredUpdateAuthorityAddress) : args.payer.publicKey);
+  const updateAuthority = requestedUpdateAuthority.equals(args.payer.publicKey) ? requestedUpdateAuthority : args.payer.publicKey;
+  const creatorVerified = creatorAddress.equals(args.payer.publicKey);
   const transaction = new Transaction().add(
     createCreateMetadataAccountV3Instruction(
       {
@@ -131,7 +140,7 @@ export async function createNftMetadata(args: {
         mint: args.mint,
         mintAuthority: args.payer.publicKey,
         payer: args.payer.publicKey,
-        updateAuthority: args.payer.publicKey,
+        updateAuthority,
         systemProgram: SystemProgram.programId,
         rent: SYSVAR_RENT_PUBKEY,
       },
@@ -142,7 +151,7 @@ export async function createNftMetadata(args: {
             symbol: args.symbol,
             uri: args.uri,
             sellerFeeBasisPoints: 0,
-            creators: [{ address: args.payer.publicKey, verified: true, share: 100 }],
+            creators: [{ address: creatorAddress, verified: creatorVerified, share: 100 }],
             collection,
             uses: null,
           },
@@ -155,7 +164,7 @@ export async function createNftMetadata(args: {
       {
         edition: masterEdition,
         mint: args.mint,
-        updateAuthority: args.payer.publicKey,
+        updateAuthority,
         mintAuthority: args.payer.publicKey,
         payer: args.payer.publicKey,
         metadata,

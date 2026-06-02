@@ -46,6 +46,7 @@ Deploying can need more than 2 SOL, so repeat the airdrop or use the Solana fauc
 export SOLANA_RPC_URL=https://api.devnet.solana.com
 export SOLANA_KEYPAIR=/home/dimassell/.config/solana/id.json
 export RESONANCE_SOLANA_PROGRAM_ID=bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7
+export SOLANA_CREATOR_ADDRESS=2ryR7rmGYP2pcjv6WWLTG3Ats3RpfKshkZ5EJTMeMCzC
 ```
 
 RE, NFT, staking, and dashboard state are read from Solana/SPL accounts. MongoDB/API cache is optional and must not be treated as source of truth.
@@ -191,6 +192,14 @@ export METADATA_CID=PASTE_METADATA_CID
 These are real Metaplex NFTs with metadata and master editions. They also remain compatible with the staking program because each mint has decimals `0` and supply `1`.
 
 The mint script reads local V3 metadata and V3 `onchain-traits.json`. It does not invent mining traits.
+
+Metaplex creator defaults to:
+
+```text
+2ryR7rmGYP2pcjv6WWLTG3Ats3RpfKshkZ5EJTMeMCzC
+```
+
+If the script signer is that same wallet, the creator is marked verified. If a user wallet mints from the frontend, the project creator address is still written, but it cannot be marked verified unless the project wallet also signs or a separate verification flow is added.
 
 ```bash
 export SAMPLE_NODE_COUNT=20
