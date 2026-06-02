@@ -5,7 +5,7 @@ import path from "node:path";
 function parseArgs(argv) {
   const args = {
     metadataDir: "output_scientific_collection_v3/chladni-nodes/metadata",
-    imageCid: "",
+    imageCid: "QmRevxcGyjxinkwx4CJPweypu5RG9H8NPoB7LdwWsuDsni",
     imageBase: "",
     imageExt: "png",
     animationCid: "",

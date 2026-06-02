@@ -99,7 +99,7 @@ export function metadataUriFor(tokenId: number) {
   if (process.env.METADATA_CID) {
     return `ipfs://${process.env.METADATA_CID}/${tokenId}.json`;
   }
-  return `https://example.com/resonance-genesis/${tokenId}.json`;
+  return `https://mild-fuchsia-loon.myfilebase.com/ipfs/${tokenId}.json`;
 }
 
 export function collectionMetadataUri() {
@@ -109,7 +109,7 @@ export function collectionMetadataUri() {
   if (process.env.METADATA_CID) {
     return `ipfs://${process.env.METADATA_CID}/collection.json`;
   }
-  return "https://example.com/resonance-genesis/collection.json";
+  return "https://mild-fuchsia-loon.myfilebase.com/ipfs/QmToSLPP3AuieHXnZW7vAATQLnBLmgjkJ5UJGbVXh9Vno1/1.json";
 }
 
 export async function createNftMetadata(args: {
