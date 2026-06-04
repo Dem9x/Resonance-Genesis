@@ -1,5 +1,7 @@
 pub mod claim_re;
 pub mod initialize;
+pub mod migrate_global_config;
+pub mod register_node_mint;
 pub mod set_traits;
 pub mod stake_node;
 pub mod unstake_node;
@@ -7,6 +9,8 @@ pub mod update_config;
 
 pub use claim_re::ClaimRe;
 pub use initialize::{Initialize, InitializeArgs};
+pub use migrate_global_config::{MigrateGlobalConfig, MigrateGlobalConfigArgs};
+pub use register_node_mint::{RegisterNodeMint, RegisterNodeMintArgs};
 pub use set_traits::{SetNodeTraits, SetNodeTraitsArgs};
 pub use stake_node::StakeNode;
 pub use unstake_node::UnstakeNode;

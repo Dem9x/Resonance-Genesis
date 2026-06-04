@@ -19,6 +19,31 @@ function mintPda(seed: string, mint: PublicKey, programId: PublicKey) {
   return PublicKey.findProgramAddressSync([Buffer.from(seed), mint.toBuffer()], programId);
 }
 
+function tokenIdBytes(tokenId: number) {
+  const buffer = Buffer.alloc(8);
+  buffer.writeBigUInt64LE(BigInt(tokenId));
+  return buffer;
+}
+
+function mintRecordPda(tokenId: number, programId: PublicKey) {
+  return PublicKey.findProgramAddressSync([Buffer.from("mint_record"), tokenIdBytes(tokenId)], programId);
+}
+
+function registerArgs(tokenId: number, nftMint: PublicKey) {
+  return {
+    tokenId: new anchor.BN(tokenId),
+    nftMint,
+    metadataUriHash: tokenId,
+    frequency: 963,
+    modeN: 6,
+    modeM: 8,
+    nodeDensityBps: 920,
+    lineThicknessBps: 102,
+    rarityTier: 2,
+    patternFamilyHash: 12345 + tokenId,
+  };
+}
+
 async function expectRejected(promise: Promise<unknown>, message?: string) {
   try {
     await promise;
@@ -34,6 +59,7 @@ describe("resonance_genesis", () => {
   anchor.setProvider(provider);
 
   const program = anchor.workspace.ResonanceGenesis as Program<ResonanceGenesis>;
+  const programAny = program as any;
   const authority = provider.wallet.publicKey;
   const nonOwner = Keypair.generate();
 
@@ -55,7 +81,7 @@ describe("resonance_genesis", () => {
     const nonOwnerNftAccount = await getOrCreateAssociatedTokenAccount(provider.connection, provider.wallet.payer, nftMint, nonOwner.publicKey);
 
     await program.methods
-      .initialize({ treasury: authority, energyScale: new anchor.BN(1) })
+      .initialize({ treasury: authority, energyScale: new anchor.BN(1), maxSupply: new anchor.BN(2) })
       .accountsStrict({
         authority,
         reMint,
@@ -70,6 +96,87 @@ describe("resonance_genesis", () => {
     assert.equal(config.collectionMint.toBase58(), collectionMint.toBase58());
     assert.equal(config.minClaimRe.toString(), (33n * RE_DECIMALS).toString());
     assert.equal(config.maxReSupply.toString(), (1_000_000_000n * RE_DECIMALS).toString());
+    assert.equal((config as any).nextTokenId.toString(), "1");
+    assert.equal((config as any).mintedCount.toString(), "0");
+    assert.equal((config as any).maxSupply.toString(), "2");
+
+    const [mintRecord1] = mintRecordPda(1, program.programId);
+    const [registeredNodeTraits1] = mintPda("node_traits", nftMint, program.programId);
+    await programAny.methods
+      .registerNodeMint(registerArgs(1, nftMint))
+      .accountsStrict({
+        owner: authority,
+        globalConfig,
+        nftMint,
+        mintRecord: mintRecord1,
+        nodeTraits: registeredNodeTraits1,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+
+    const record1 = await programAny.account.mintRecord.fetch(mintRecord1);
+    assert.equal(record1.tokenId.toString(), "1");
+    assert.equal(record1.nftMint.toBase58(), nftMint.toBase58());
+    assert.equal(record1.owner.toBase58(), authority.toBase58());
+
+    const configAfterFirstMint = await program.account.globalConfig.fetch(globalConfig);
+    assert.equal((configAfterFirstMint as any).nextTokenId.toString(), "2");
+    assert.equal((configAfterFirstMint as any).mintedCount.toString(), "1");
+
+    await expectRejected(
+      programAny.methods
+        .registerNodeMint(registerArgs(1, nftMint))
+        .accountsStrict({
+          owner: authority,
+          globalConfig,
+          nftMint,
+          mintRecord: mintRecord1,
+          nodeTraits: registeredNodeTraits1,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc(),
+    );
+
+    const nftMint2 = await createMint(provider.connection, provider.wallet.payer, authority, null, 0);
+    const userNftAccount2 = await getOrCreateAssociatedTokenAccount(provider.connection, provider.wallet.payer, nftMint2, authority);
+    await mintTo(provider.connection, provider.wallet.payer, nftMint2, userNftAccount2.address, provider.wallet.payer, 1);
+    const [mintRecord2] = mintRecordPda(2, program.programId);
+    const [registeredNodeTraits2] = mintPda("node_traits", nftMint2, program.programId);
+    await programAny.methods
+      .registerNodeMint(registerArgs(2, nftMint2))
+      .accountsStrict({
+        owner: authority,
+        globalConfig,
+        nftMint: nftMint2,
+        mintRecord: mintRecord2,
+        nodeTraits: registeredNodeTraits2,
+        systemProgram: SystemProgram.programId,
+      })
+      .rpc();
+
+    const configAfterSecondMint = await program.account.globalConfig.fetch(globalConfig);
+    assert.equal((configAfterSecondMint as any).nextTokenId.toString(), "3");
+    assert.equal((configAfterSecondMint as any).mintedCount.toString(), "2");
+
+    const nftMint3 = await createMint(provider.connection, provider.wallet.payer, authority, null, 0);
+    const userNftAccount3 = await getOrCreateAssociatedTokenAccount(provider.connection, provider.wallet.payer, nftMint3, authority);
+    await mintTo(provider.connection, provider.wallet.payer, nftMint3, userNftAccount3.address, provider.wallet.payer, 1);
+    const [mintRecord3] = mintRecordPda(3, program.programId);
+    const [registeredNodeTraits3] = mintPda("node_traits", nftMint3, program.programId);
+    await expectRejected(
+      programAny.methods
+        .registerNodeMint(registerArgs(3, nftMint3))
+        .accountsStrict({
+          owner: authority,
+          globalConfig,
+          nftMint: nftMint3,
+          mintRecord: mintRecord3,
+          nodeTraits: registeredNodeTraits3,
+          systemProgram: SystemProgram.programId,
+        })
+        .rpc(),
+      "SoldOut",
+    );
 
     const [nodeTraits] = mintPda("node_traits", nftMint, program.programId);
     await program.methods

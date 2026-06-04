@@ -1,3 +1,4 @@
+//packages/solana/scripts/lib.ts
 import * as anchor from "@coral-xyz/anchor";
 import {
   Connection,
@@ -54,14 +55,14 @@ const cachePath = path.resolve(process.cwd(), ".cache", "solana-devnet.json");
 export const programId = new PublicKey(
   process.env.RESONANCE_SOLANA_PROGRAM_ID ||
     process.env.NEXT_PUBLIC_RESONANCE_SOLANA_PROGRAM_ID ||
-    "bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7",
+    "EMrGu6bcLn7YjuTsf7YEQb5fecu4vukPFtU48v2y53k1",
 );
 
 export const rpcUrl = process.env.SOLANA_RPC_URL || clusterApiUrl("devnet");
 export const keypairPath = process.env.SOLANA_KEYPAIR || `${os.homedir()}/.config/solana/id.json`;
-export const defaultCreatorAddress = "2ryR7rmGYP2pcjv6WWLTG3Ats3RpfKshkZ5EJTMeMCzC";
+export const defaultCreatorAddress = "7gtA6HZcACGNsPs9UjBpVyb6ytDWuEtGEYsXdz8UMvpZ";
 export const configuredCreatorAddress = process.env.CREATOR_WALLET || process.env.SOLANA_CREATOR_ADDRESS || process.env.METAPLEX_CREATOR_ADDRESS || defaultCreatorAddress;
-export const configuredUpdateAuthorityAddress = process.env.SOLANA_UPDATE_AUTHORITY_ADDRESS || "";
+export const configuredUpdateAuthorityAddress = process.env.SOLANA_UPDATE_AUTHORITY_ADDRESS || "7gtA6HZcACGNsPs9UjBpVyb6ytDWuEtGEYsXdz8UMvpZ";
 export const configuredRoyaltyBps = Number(process.env.NFT_ROYALTY_BPS || "500");
 
 export function loadPayer() {
@@ -111,10 +112,10 @@ export function collectionMetadataUri() {
   if (process.env.COLLECTION_METADATA_URI) {
     return process.env.COLLECTION_METADATA_URI;
   }
-  if (process.env.METADATA_CID) {
-    return `ipfs://${process.env.METADATA_CID}/collection.json`;
+  if (process.env.COLLECTION_METADATA_CID) {
+    return `ipfs://${process.env.COLLECTION_METADATA_CID}/collection.json`;
   }
-  return "https://mild-fuchsia-loon.myfilebase.com/ipfs/QmToSLPP3AuieHXnZW7vAATQLnBLmgjkJ5UJGbVXh9Vno1/1.json";
+  return `https://mild-fuchsia-loon.myfilebase.com/ipfs/${process.env.COLLECTION_METADATA_CID}/collection.json`;
 }
 
 export async function createNftMetadata(args: {
@@ -256,6 +257,22 @@ export function getProgram(provider: anchor.AnchorProvider) {
 
 export function globalConfigPda() {
   return PublicKey.findProgramAddressSync([Buffer.from("global_config")], programId);
+}
+
+export function tokenIdToLeBytes(tokenId: number | bigint) {
+  const value = typeof tokenId === "bigint" ? tokenId : BigInt(tokenId);
+  const buffer = Buffer.alloc(8);
+  buffer.writeBigUInt64LE(value);
+  return buffer;
+}
+
+export function mintRecordPda(tokenId: number | bigint) {
+  return PublicKey.findProgramAddressSync([Buffer.from("mint_record"), tokenIdToLeBytes(tokenId)], programId);
+}
+
+export async function readGlobalConfig(program: anchor.Program, globalConfig?: PublicKey) {
+  const [derivedGlobalConfig] = globalConfigPda();
+  return (program.account as any).globalConfig.fetch(globalConfig || derivedGlobalConfig);
 }
 
 export function reMintAuthorityPda() {

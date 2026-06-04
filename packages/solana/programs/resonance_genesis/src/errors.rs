@@ -24,4 +24,12 @@ pub enum ResonanceError {
     InvalidReMint,
     #[msg("Math overflow")]
     MathOverflow,
+    #[msg("Chladni Node collection is sold out")]
+    SoldOut,
+    #[msg("Invalid token id")]
+    InvalidTokenId,
+    #[msg("Mint record already exists")]
+    MintRecordAlreadyExists,
+    #[msg("Invalid global config account layout")]
+    InvalidGlobalConfigLayout,
 }

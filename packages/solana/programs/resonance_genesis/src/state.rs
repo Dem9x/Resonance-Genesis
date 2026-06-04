@@ -4,6 +4,7 @@ pub const RE_DECIMALS: u64 = 1_000_000_000;
 pub const MAX_RE_SUPPLY: u64 = 1_000_000_000 * RE_DECIMALS;
 pub const MIN_CLAIM_RE: u64 = 33 * RE_DECIMALS;
 pub const DEFAULT_ENERGY_SCALE: u64 = 86_400;
+pub const DEFAULT_MAX_NODE_SUPPLY: u64 = 1_212;
 
 #[account]
 pub struct GlobalConfig {
@@ -15,11 +16,29 @@ pub struct GlobalConfig {
     pub max_re_supply: u64,
     pub min_claim_re: u64,
     pub energy_scale: u64,
+    pub next_token_id: u64,
+    pub max_supply: u64,
+    pub minted_count: u64,
     pub bump: u8,
 }
 
 impl GlobalConfig {
-    pub const LEN: usize = 8 + 32 * 4 + 8 * 4 + 1;
+    pub const LEN: usize = 8 + 32 * 4 + 8 * 7 + 1;
+    pub const OLD_LEN: usize = 8 + 32 * 4 + 8 * 4 + 1;
+}
+
+#[account]
+pub struct MintRecord {
+    pub token_id: u64,
+    pub nft_mint: Pubkey,
+    pub owner: Pubkey,
+    pub metadata_uri_hash: u32,
+    pub minted_at: i64,
+    pub bump: u8,
+}
+
+impl MintRecord {
+    pub const LEN: usize = 8 + 8 + 32 + 32 + 4 + 8 + 1;
 }
 
 #[account]
@@ -88,4 +107,12 @@ pub struct ConfigUpdated {
     pub authority: Pubkey,
     pub min_claim_re: u64,
     pub energy_scale: u64,
+}
+
+#[event]
+pub struct NodeMintRegistered {
+    pub token_id: u64,
+    pub nft_mint: Pubkey,
+    pub owner: Pubkey,
+    pub metadata_uri_hash: u32,
 }

@@ -225,5 +225,7 @@ export async function scanSolanaNodes({
     }),
   );
 
-  return nodes.sort((a, b) => a.mint.localeCompare(b.mint));
+  return nodes
+    .filter((node) => node.traitsSource === "onchain" || Boolean(node.stake?.active))
+    .sort((a, b) => a.mint.localeCompare(b.mint));
 }

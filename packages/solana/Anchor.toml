@@ -1,12 +1,14 @@
+[toolchain]
+
 [features]
-seeds = true
+resolution = true
 skip-lint = false
 
-[programs.localnet]
-resonance_genesis = "bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7"
-
 [programs.devnet]
-resonance_genesis = "bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7"
+resonance_genesis = "EMrGu6bcLn7YjuTsf7YEQb5fecu4vukPFtU48v2y53k1"
+
+[programs.localnet]
+resonance_genesis = "EMrGu6bcLn7YjuTsf7YEQb5fecu4vukPFtU48v2y53k1"
 
 [registry]
 url = "https://api.apr.dev"

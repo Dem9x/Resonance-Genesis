@@ -1,12 +1,13 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token::Mint;
 
-use crate::state::{GlobalConfig, DEFAULT_ENERGY_SCALE, MAX_RE_SUPPLY, MIN_CLAIM_RE};
+use crate::state::{GlobalConfig, DEFAULT_ENERGY_SCALE, DEFAULT_MAX_NODE_SUPPLY, MAX_RE_SUPPLY, MIN_CLAIM_RE};
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct InitializeArgs {
     pub treasury: Pubkey,
     pub energy_scale: Option<u64>,
+    pub max_supply: Option<u64>,
 }
 
 #[derive(Accounts)]
@@ -36,6 +37,9 @@ pub fn handler(ctx: Context<Initialize>, args: InitializeArgs) -> Result<()> {
     config.max_re_supply = MAX_RE_SUPPLY;
     config.min_claim_re = MIN_CLAIM_RE;
     config.energy_scale = args.energy_scale.unwrap_or(DEFAULT_ENERGY_SCALE);
+    config.next_token_id = 1;
+    config.max_supply = args.max_supply.unwrap_or(DEFAULT_MAX_NODE_SUPPLY);
+    config.minted_count = 0;
     config.bump = ctx.bumps.global_config;
     Ok(())
 }

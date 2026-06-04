@@ -113,7 +113,7 @@ export function SolanaMintPanel() {
         {status === "success" && result ? (
           <div className="mt-5 rounded-2xl border border-[var(--success)]/35 bg-[var(--success)]/10 p-4 text-sm leading-6 text-[var(--success)]">
             <div className="flex items-center gap-2 font-black">
-              <CheckCircle2 className="h-4 w-4" /> Mint confirmed
+              <CheckCircle2 className="h-4 w-4" /> Mint confirmed: Chladni Node #{result.tokenId}
             </div>
             <p className="mt-2 break-all font-mono text-xs text-[var(--text)]">NFT_MINT={result.mint}</p>
             <a

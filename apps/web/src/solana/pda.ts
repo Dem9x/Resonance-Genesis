@@ -27,3 +27,14 @@ export function nodeTraitsPda(nftMint: PublicKey) {
 export function stakePda(nftMint: PublicKey) {
   return derive([Buffer.from("stake"), nftMint.toBuffer()]);
 }
+
+export function tokenIdToLeBytes(tokenId: number | bigint) {
+  const value = typeof tokenId === "bigint" ? tokenId : BigInt(tokenId);
+  const buffer = Buffer.alloc(8);
+  buffer.writeBigUInt64LE(value);
+  return buffer;
+}
+
+export function mintRecordPda(tokenId: number | bigint) {
+  return derive([Buffer.from("mint_record"), tokenIdToLeBytes(tokenId)]);
+}

@@ -45,7 +45,8 @@ Deploying can need more than 2 SOL, so repeat the airdrop or use the Solana fauc
 ```bash
 export SOLANA_RPC_URL=https://api.devnet.solana.com
 export SOLANA_KEYPAIR=/home/dimassell/.config/solana/id.json
-export RESONANCE_SOLANA_PROGRAM_ID=bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7
+export RESONANCE_SOLANA_PROGRAM_ID=EMrGu6bcLn7YjuTsf7YEQb5fecu4vukPFtU48v2y53k1
+export SOLANA_MAX_SUPPLY=1212
 export SOLANA_CREATOR_ADDRESS=2ryR7rmGYP2pcjv6WWLTG3Ats3RpfKshkZ5EJTMeMCzC
 export CREATOR_WALLET=2ryR7rmGYP2pcjv6WWLTG3Ats3RpfKshkZ5EJTMeMCzC
 export CREATOR_TREASURY=2ryR7rmGYP2pcjv6WWLTG3Ats3RpfKshkZ5EJTMeMCzC
@@ -86,7 +87,7 @@ anchor deploy --provider.cluster devnet
 Current Devnet program:
 
 ```text
-bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7
+EMrGu6bcLn7YjuTsf7YEQb5fecu4vukPFtU48v2y53k1
 ```
 
 If the program id changes after a new deploy, update:
@@ -159,6 +160,36 @@ INITIALIZE_SIGNATURE=...
 ```
 
 If `global_config` already exists, the script prints `Global config already initialized` and exits successfully.
+
+If it prints `GLOBAL_CONFIG_LAYOUT=old-or-incompatible`, the Devnet account still uses the pre-counter layout. Deploy the upgraded program, then migrate the existing PDA:
+
+```bash
+npm run migrate-global-config
+```
+
+The migration reads `.cache/solana-devnet.json` and sets `next_token_id` to the highest cached token ID + 1. If the cache was deleted, set it manually:
+
+```bash
+export MIGRATION_NEXT_TOKEN_ID=10
+export MIGRATION_MINTED_COUNT=9
+npm run migrate-global-config
+```
+
+After migration, run:
+
+```bash
+npm run inspect-state
+```
+
+The upgraded Solana program stores sequential mint state in `GlobalConfig`:
+
+```text
+next_token_id
+minted_count
+max_supply
+```
+
+The mint script reads `next_token_id` from chain for every mint. Deleting `.cache/solana-devnet.json` does not reset token IDs.
 
 ## 8. Generate V3 Scientific Source Assets
 
@@ -257,6 +288,14 @@ The cache maps:
 tokenId -> mint address
 ```
 
+The cache is convenience only. On-chain `GlobalConfig.next_token_id` is the sequential mint source of truth.
+
+Inspect the on-chain mint counter:
+
+```bash
+npm run inspect-state
+```
+
 ## 10. Set On-Chain Mining Traits
 
 Solana cannot read JSON metadata directly, so compact mining traits must be stored in NodeTraits PDAs.
@@ -339,13 +378,13 @@ Add this to `apps/web/.env.local`:
 ```env
 NEXT_PUBLIC_SOLANA_NETWORK=devnet
 NEXT_PUBLIC_SOLANA_RPC_URL=https://api.devnet.solana.com
-NEXT_PUBLIC_RESONANCE_SOLANA_PROGRAM_ID=bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7
+NEXT_PUBLIC_RESONANCE_SOLANA_PROGRAM_ID=EMrGu6bcLn7YjuTsf7YEQb5fecu4vukPFtU48v2y53k1
 NEXT_PUBLIC_RE_MINT_ADDRESS=A97SvjGAGDQ4pWbFCy9qRo9n8tFu9v2yKYnRUxUnuPvL
 NEXT_PUBLIC_CHLADNI_COLLECTION_MINT=8UmYv4F1LBCFgaf2cioz32MSrF2g2K2zvG9h7QLNjRkR
 
 SOLANA_NETWORK=devnet
 SOLANA_RPC_URL=https://api.devnet.solana.com
-RESONANCE_SOLANA_PROGRAM_ID=bRDSZkzbgqprvxAMTaWTkfHNcdQJMBgCNjHntKirDo7
+RESONANCE_SOLANA_PROGRAM_ID=EMrGu6bcLn7YjuTsf7YEQb5fecu4vukPFtU48v2y53k1
 RE_MINT_ADDRESS=A97SvjGAGDQ4pWbFCy9qRo9n8tFu9v2yKYnRUxUnuPvL
 CHLADNI_COLLECTION_MINT=8UmYv4F1LBCFgaf2cioz32MSrF2g2K2zvG9h7QLNjRkR
 ```

@@ -1,6 +1,6 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PublicKey, SendTransactionError } from "@solana/web3.js";
-import { getProgram, getProvider, globalConfigPda, loadCache, saveCache, systemProgram } from "./lib";
+import { getProgram, getProvider, globalConfigPda, loadCache, readGlobalConfig, saveCache, systemProgram } from "./lib";
 
 async function main() {
   const cache = loadCache();
@@ -18,6 +18,7 @@ async function main() {
   const program = getProgram(provider);
   const [globalConfig] = globalConfigPda();
   const energyScale = Number(process.env.ENERGY_SCALE || "86400");
+  const maxSupply = Number(process.env.SOLANA_MAX_SUPPLY || process.env.MAX_SUPPLY || "1212");
   const existingConfig = await provider.connection.getAccountInfo(globalConfig);
 
   if (existingConfig) {
@@ -28,6 +29,16 @@ async function main() {
     });
     console.log("Global config already initialized");
     console.log(`GLOBAL_CONFIG=${globalConfig.toBase58()}`);
+    try {
+      const config = await readGlobalConfig(program, globalConfig);
+      console.log(`NEXT_TOKEN_ID=${config.nextTokenId?.toString?.() || "unknown-old-layout"}`);
+      console.log(`MINTED_COUNT=${config.mintedCount?.toString?.() || "unknown-old-layout"}`);
+      console.log(`MAX_SUPPLY=${config.maxSupply?.toString?.() || "unknown-old-layout"}`);
+    } catch (error) {
+      console.log("GLOBAL_CONFIG_LAYOUT=old-or-incompatible");
+      console.log("Run npm run migrate-global-config after deploying the upgraded program.");
+      console.log("If .cache is missing, set MIGRATION_NEXT_TOKEN_ID manually, for example MIGRATION_NEXT_TOKEN_ID=10.");
+    }
     process.exit(0);
   }
 
@@ -37,6 +48,7 @@ async function main() {
       .initialize({
         treasury: payer.publicKey,
         energyScale: new anchor.BN(energyScale),
+        maxSupply: new anchor.BN(maxSupply),
       })
       .accounts({
         authority: payer.publicKey,
@@ -63,6 +75,9 @@ async function main() {
   });
 
   console.log(`GLOBAL_CONFIG=${globalConfig.toBase58()}`);
+  console.log(`NEXT_TOKEN_ID=1`);
+  console.log(`MINTED_COUNT=0`);
+  console.log(`MAX_SUPPLY=${maxSupply}`);
   console.log(`INITIALIZE_SIGNATURE=${signature}`);
 }
 

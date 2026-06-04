@@ -10,8 +10,10 @@
     "create-collection": "tsx scripts/create-collection.ts",
     "derive-pdas": "tsx scripts/derive-pdas.ts",
     "initialize": "tsx scripts/initialize.ts",
+    "migrate-global-config": "tsx scripts/migrate-global-config.ts",
     "mint-samples": "tsx scripts/mint-chladni-nodes.ts",
     "set-traits": "tsx scripts/set-node-traits.ts",
+    "inspect-state": "tsx scripts/inspect-state.ts",
     "stake-test-node": "tsx scripts/stake-test-node.ts",
     "claim-test-re": "tsx scripts/claim-test-re.ts"
   },
@@ -22,7 +24,7 @@
     "@solana/web3.js": "^1.98.4"
   },
   "devDependencies": {
-    "tsx": "^4.19.2",
+    "tsx": "^4.22.4",
     "typescript": "^5.7.3"
   }
 }

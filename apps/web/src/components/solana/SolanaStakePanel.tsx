@@ -76,13 +76,19 @@ export function SolanaStakePanel() {
             {nodes.map((node) => (
               <div key={node.mint} className="space-y-3">
                 <SolanaNodeCard node={node} />
+                {!node.traits?.initialized ? (
+                  <p className="rounded-xl border border-[var(--warning)]/35 bg-[var(--warning)]/10 p-3 text-xs leading-5 text-[var(--warning)]">
+                    On-chain traits belum diset untuk mint ini. Jalankan `npm run set-traits` dengan NFT_MINT dan TRAIT_TOKEN_ID sebelum staking.
+                  </p>
+                ) : null}
                 <div className="grid grid-cols-3 gap-2">
                   <button
                     className="rounded-full px-3 py-2 text-sm font-black theme-button disabled:opacity-50"
                     disabled={stakeLoading || Boolean(node.stake?.active) || !node.traits?.initialized}
+                    title={!node.traits?.initialized ? "Set on-chain traits first before staking." : "Stake this Chladni Node"}
                     onClick={() => run("Stake", () => stakeNode(node.mint))}
                   >
-                    Stake
+                    {node.traits?.initialized ? "Stake" : "Set Traits"}
                   </button>
                   <button
                     className="rounded-full border border-[var(--panel-border)] px-3 py-2 text-sm font-black text-[var(--text)] disabled:opacity-50"
